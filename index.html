@@ -21,7 +21,7 @@
     --yellow: #ffd166;
     --blue: #4d9fff;
     --radius: 8px;
-    --nav-h: 52px;
+    --nav-h: 56px;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -36,7 +36,7 @@
     overflow-x: hidden;
   }
 
-  /* ─── GLOBAL NAV ─── */
+  /* ─── GLOBAL NAV WITH DUAL PORTAL SWITCHER ─── */
   .nav {
     position: fixed; top: 0; left: 0; right: 0;
     height: var(--nav-h);
@@ -44,7 +44,6 @@
     border-bottom: 1px solid var(--border);
     display: flex; align-items: center;
     padding: 0 20px;
-    gap: 6px;
     z-index: 1000;
   }
   .nav-logo {
@@ -56,24 +55,42 @@
     letter-spacing: 0.05em;
     line-height: 1.2;
     margin-right: 16px;
-    cursor: pointer;
     user-select: none;
   }
   .nav-logo span { color: var(--text); }
-  .nav-link {
-    padding: 6px 12px;
-    font-size: 12px;
-    color: var(--text-muted);
-    cursor: pointer;
-    border-radius: 5px;
-    transition: all 0.15s;
-  }
-  .nav-link:hover { color: var(--text); background: var(--surface2); }
-  .nav-link.active { color: var(--text); }
-  .nav-sep { width: 1px; height: 20px; background: var(--border); margin: 0 6px; }
   .nav-spacer { flex: 1; }
+
+  /* Tab Control Switcher Design Element */
+  .portal-switcher-tabs {
+    display: flex;
+    background: var(--bg);
+    padding: 4px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    margin-right: 16px;
+  }
+  .switcher-tab {
+    padding: 6px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: 700;
+    transition: all 0.15s ease;
+  }
+  .switcher-tab:hover { color: #fff; }
+  .switcher-tab.active {
+    background: var(--surface2);
+    color: var(--accent);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  }
+
   .nav-avatar {
-    padding: 4px 10px; font-size: 12px; font-family: 'Space Mono', monospace;
+    padding: 5px 12px; font-size: 12px; font-family: 'Space Mono', monospace;
     color: var(--accent); border: 1px solid var(--border); border-radius: 4px; background: var(--surface2);
   }
 
@@ -220,7 +237,6 @@
   }
   .member-pill span { color: var(--red); cursor: pointer; font-weight: bold; font-size: 12px; }
 
-  /* New Member Matrix Grid */
   .matrix-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
   .matrix-table th { background: var(--surface2); text-align: left; padding: 10px; color: var(--accent); font-family: 'Space Mono'; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
   .matrix-table td { padding: 10px; border-bottom: 1px solid var(--border); color: var(--text-dim); }
@@ -262,10 +278,14 @@
 <body>
 
 <nav class="nav">
-  <div class="nav-logo" id="adminPortalTrigger" title="Click to launch Admin Verification Node">DESIGN<br><span>HACKATHON</span></div>
-  <div class="nav-sep"></div>
-  <div class="nav-link active" id="nav-home" onclick="navigate('landing')">Home Gate</div>
+  <div class="nav-logo">DESIGN<br><span>HACKATHON</span></div>
   <div class="nav-spacer"></div>
+  
+  <div class="portal-switcher-tabs">
+    <button class="switcher-tab active" id="tab-user" onclick="handleWorkspaceTabRouting('user')">User Portal</button>
+    <button class="switcher-tab" id="tab-admin" onclick="handleWorkspaceTabRouting('admin')">Admin Section</button>
+  </div>
+
   <div class="nav-avatar" id="current-user-avatar">👤 Guest Node</div>
 </nav>
 
@@ -467,8 +487,7 @@
               <th>Metadata Link Reference</th>
             </tr>
           </thead>
-          <tbody id="memberLedgerTableBody">
-            </tbody>
+          <tbody id="memberLedgerTableBody"></tbody>
         </table>
       </div>
     </div>
@@ -479,7 +498,7 @@
         <div style="display: flex; align-items: center; gap: 12px; margin-top: 12px;">
           <button class="btn-action" onclick="adjustGlobalTime(-15)">-15m</button>
           <button class="btn-action" onclick="adjustGlobalTime(-60)">-1h</button>
-          <div style="font-family: 'Space Mono'; font-size: 24px; font-weight: 700;" id="adminClockDisplay">71:57:39</div>
+          <div style="font-family: 'Space Mono'; font-size: 24px; font-weight: 700; color: var(--accent);" id="adminClockDisplay">71:57:39</div>
           <button class="btn-action" onclick="adjustGlobalTime(60)">+1h</button>
           <button class="btn-action" onclick="adjustGlobalTime(15)">+15m</button>
         </div>
@@ -636,7 +655,6 @@
     { user: 'palak', email: 'palak@gmail.com' }
   ];
 
-  // Core System Database - Track objects can include dynamic structural details
   let systemTeams = [
     { 
       id: "11111", 
@@ -663,7 +681,6 @@
   let loggedSubmissionsZip = [];
 
   document.addEventListener("DOMContentLoaded", () => {
-    setupAdminTrigger();
     setupNoCopyConstraints();
     refreshTeamRegistryViews();
     startGlobalChronometer();
@@ -676,17 +693,29 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function setupAdminTrigger() {
-    document.getElementById("adminPortalTrigger").addEventListener("click", () => {
+  /* ─── TAB NAVIGATION SWITCH ENGINE ─── */
+  function handleWorkspaceTabRouting(portalKey) {
+    // Sync highlighted visual tab states
+    document.querySelectorAll('.switcher-tab').forEach(btn => btn.classList.remove('active'));
+    
+    if (portalKey === 'admin') {
+      document.getElementById('tab-admin').classList.add('active');
       if (activeAdminUser) {
         navigate('admin-dashboard');
       } else {
         navigate('admin-auth');
       }
-    });
+    } else {
+      document.getElementById('tab-user').classList.add('active');
+      if (authenticatedStudentTeam) {
+        navigate('workspace-view');
+      } else {
+        navigate('landing');
+      }
+    }
   }
 
-  // ─── CASE-INSENSITIVE STUDENT AUTHENTICATION SYSTEM ───
+  // ─── STUDENT AUTHENTICATION PROTOCOLS ───
   function attemptStudentLogin() {
     const teamNoVal = document.getElementById("studTeamNo").value.trim().toLowerCase();
     const eventIdVal = document.getElementById("studEventId").value.trim();
@@ -704,10 +733,8 @@
     const matchedNode = systemTeams.find(t => {
       const matchIdentity = (t.name.toLowerCase() === teamNoVal || t.id === teamNoVal);
       const matchToken = (t.id === eventIdVal);
-      
       const lowerRoster = t.members.map(m => m.toLowerCase().trim());
       const matchMembers = lowerRoster.includes(m1) && lowerRoster.includes(m2) && lowerRoster.includes(m3);
-      
       return matchIdentity && matchToken && matchMembers && t.members.length === 3;
     });
 
@@ -719,14 +746,13 @@
       document.getElementById("activeWorkspaceMembersTag").innerText = `Members: ${matchedNode.members.join(', ')}`;
       document.getElementById("current-user-avatar").innerText = `🚀 ${matchedNode.name}`;
 
-      // Reset
       document.getElementById("studTeamNo").value = "";
       document.getElementById("studEventId").value = "";
       document.getElementById("studM1").value = "";
       document.getElementById("studM2").value = "";
       document.getElementById("studM3").value = "";
 
-      navigate('workspace-view');
+      handleWorkspaceTabRouting('user');
     } else {
       errorBox.innerText = "⚠️ Validation Failed: Roster matrix payload does not match any 3-member team inside the registry block.";
       errorBox.style.display = "block";
@@ -737,10 +763,10 @@
     authenticatedStudentTeam = null;
     document.getElementById("current-user-avatar").innerText = "👤 Guest Node";
     refreshTeamRegistryViews();
-    navigate('landing');
+    handleWorkspaceTabRouting('user');
   }
 
-  // ─── ADMIN REGIONAL AUTHENTICATION LOOP MATCHER ───
+  // ─── ADMIN REGIONAL AUTH MATCH LOOP ───
   function handleRegionalTeamAuthentication(event) {
     event.preventDefault();
     
@@ -759,10 +785,8 @@
     const cleanMatch = systemTeams.find(t => {
       const designationMatch = (t.name.toLowerCase() === teamDesignation || t.id === teamDesignation);
       const tokenMatch = (t.id === eventToken);
-      
       const lowerRegistryMembers = t.members.map(m => m.toLowerCase().trim());
       const membersMatch = lowerRegistryMembers.includes(names[0]) && lowerRegistryMembers.includes(names[1]) && lowerRegistryMembers.includes(names[2]);
-      
       return designationMatch && tokenMatch && membersMatch && t.members.length === 3;
     });
 
@@ -783,18 +807,15 @@
     }
   }
 
-  // AUTOMATED REGISTRY MATRIX INJECTION (Updates both sections)
   function commitAuthPayloadToGlobalRegistry() {
     const teamDesignation = document.getElementById('auth-team-designation').value.trim();
     const eventToken = document.getElementById('auth-event-token').value.trim();
-    
     const nameElements = document.querySelectorAll('#auth-roster-payload-container .member-card');
     
     if (!teamDesignation || eventToken.length !== 5 || isNaN(eventToken)) {
       alert("Registration Error: Please supply a Team Designation and a valid 5-digit numeric ID code.");
       return;
     }
-
     if (systemTeams.some(t => t.id === eventToken)) {
       alert("Registration Mismatch: That Event Token ID already exists inside the structural memory array.");
       return;
@@ -822,7 +843,6 @@
       return;
     }
 
-    // Push complex structured configuration onto dataset
     systemTeams.push({
       id: eventToken,
       name: teamDesignation,
@@ -832,7 +852,6 @@
 
     alert(`Successfully initialized, packed, and mapped "${teamDesignation}" into the system registry data sections.`);
     
-    // Clear registration fields
     document.getElementById('auth-team-designation').value = "";
     document.getElementById('auth-event-token').value = "";
     nameElements.forEach(card => {
@@ -843,7 +862,7 @@
     refreshTeamRegistryViews();
   }
 
-  // ─── ADMIN CLEARANCE CONSOLE ACCESS ───
+  // ─── ADMIN SYSTEM CLEARANCE ENTRANCE ───
   function attemptAdminAccess() {
     const userVal = document.getElementById("adminUser").value.trim().toLowerCase();
     const emailVal = document.getElementById("adminEmail").value.trim().toLowerCase();
@@ -859,13 +878,13 @@
       
       document.getElementById("adminUser").value = "";
       document.getElementById("adminEmail").value = "";
-      navigate('admin-dashboard');
+      handleWorkspaceTabRouting('admin');
     } else {
       errBox.style.display = "block";
     }
   }
 
-  // ─── TRACK CHRONOMETER SYSTEM ───
+  // ─── GLOBAL SYSTEM CHRONOMETER COUNTER ───
   function startGlobalChronometer() {
     if(currentTimerInterval) clearInterval(currentTimerInterval);
     currentTimerInterval = setInterval(() => {
@@ -895,13 +914,15 @@
     document.getElementById("newEventId").value = Math.floor(10000 + Math.random() * 90000);
   }
 
-  // ─── DYNAMIC REGISTRY REFRESH & LEDGER SYNC MACHINE ───
+  // ─── REGISTRY REFRESH MACHINE AND MATRIX LEDGER SYNC ───
   function refreshTeamRegistryViews() {
     const registryLog = document.getElementById("registeredTeamsLog");
     const adminSelector = document.getElementById("targetTeamSelector");
     const helpLookup = document.getElementById("studentHelpLookupList");
     const ledgerTableBody = document.getElementById("memberLedgerTableBody");
     
+    if(!registryLog || !adminSelector || !helpLookup || !ledgerTableBody) return;
+
     registryLog.innerHTML = "";
     adminSelector.innerHTML = "";
     helpLookup.innerHTML = "";
@@ -916,7 +937,6 @@
       if (team.members.length === 3) readyTeamsCount++;
       else pendingTeamsCount++;
 
-      // Log Row View 
       const row = document.createElement("div");
       row.classList.add("data-item");
 
@@ -942,13 +962,11 @@
       `;
       registryLog.appendChild(row);
 
-      // Selector dropdown population
       const opt = document.createElement("option");
       opt.value = index;
       opt.innerText = `${team.name} (ID: ${team.id})`;
       adminSelector.appendChild(opt);
 
-      // Help Gateway lists lookup compilation
       const helpBlock = document.createElement("div");
       helpBlock.style.fontSize = "11px";
       helpBlock.style.borderBottom = "1px solid #1e1e1e";
@@ -956,7 +974,6 @@
       helpBlock.innerHTML = `• <strong>${team.name}</strong> [ID: <span style="color:var(--accent);">${team.id}</span>] — Roster: ${team.members.join(', ') || 'No names bound yet.'}`;
       helpLookup.appendChild(helpBlock);
 
-      // ─── SYNCED INJECTION INTO NEW COMPREHENSIVE LEDGER SECTION ───
       if (team.details && team.details.length > 0) {
         team.details.forEach(detail => {
           const tableRow = document.createElement("tr");
@@ -970,7 +987,6 @@
           ledgerTableBody.appendChild(tableRow);
         });
       } else {
-        // Fallback reconstruction for raw participant pool additions
         team.members.forEach((m, idx) => {
           const tableRow = document.createElement("tr");
           let inferredRole = idx === 0 ? "Team Lead" : idx === 1 ? "Developer" : "Designer";
@@ -986,7 +1002,6 @@
       }
     });
 
-    // Update global context state banners
     document.getElementById("statTotalTeams").innerText = systemTeams.length;
     document.getElementById("statTotalHackers").innerText = totalHackers;
     document.getElementById("statReadyTeams").innerText = readyTeamsCount;
@@ -1053,10 +1068,10 @@
     activeAdminUser = null;
     document.getElementById("current-user-avatar").innerText = "👤 Guest Node";
     refreshTeamRegistryViews();
-    navigate('landing');
+    handleWorkspaceTabRouting('user');
   }
 
-  // ─── BROADCAST SYSTEM HANDLERS ───
+  // ─── BROADCAST CONTROL PACKAGES ───
   function toggleProblemRelease() {
     const promptText = document.getElementById("challengeInput").value.trim();
     const banner = document.getElementById("hackerProblemBanner");
@@ -1107,6 +1122,7 @@
 
   function renderAdminZipRepository() {
     const container = document.getElementById("adminZipRepository");
+    if(!container) return;
     container.innerHTML = "";
     if(loggedSubmissionsZip.length === 0) {
       container.innerHTML = `<div class="text-muted" style="text-align: center; padding: 20px;">Awaiting secure commits...</div>`;
