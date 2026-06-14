@@ -1,2345 +1,1306 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Design Hackathon - Team & Admin Console</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-
 <style>
-
   :root {
-
     --bg: #050505;
-
     --surface: #0f0f0f;
-
     --surface-card: #141414;
-
     --border: #222222;
-
     --border-dark: #000000;
-
     --accent: #c6f135;
-
     --accent-hover: #d8ff4a;
-
     --accent-glow: rgba(198, 241, 53, 0.15);
-
     --text: #f5f5f5;
-
     --text-muted: #444;
-
     --text-dim: #8e8e8e;
-
     --red: #ff2d2d;
-
     --yellow: #ffb700;
-
     --blue: #2f7fff;
-
     --nav-h: 72px;
-
   }
-
-
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-
-
   body {
-
     background: var(--bg);
-
     color: var(--text);
-
     font-family: 'Space Grotesk', sans-serif;
-
     font-size: 13px;
-
     line-height: 1.5;
-
     min-height: 100vh;
-
     overflow-x: hidden;
-
     position: relative;
-
   }
-
-
 
   /* ─── DYNAMIC COORDINATE GRID BACKGROUND ─── */
-
   body::before {
-
     content: "";
-
     position: fixed;
-
     top: 0; left: 0; width: 100vw; height: 100vh;
-
     opacity: 0.12;
-
     pointer-events: none;
-
     z-index: -1;
-
     background-image: 
-
       radial-gradient(var(--text-dim) 1px, transparent 1px),
-
       linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
-
       linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
-
     background-size: 24px 24px, 120px 120px, 120px 120px;
-
     background-position: center;
-
   }
-
-
 
   /* ─── FINE LINE BLUEPRINT CORNER EMBELLISHMENTS ─── */
-
   .blueprint-frame {
-
     position: absolute; width: 16px; height: 16px; border: 1px solid #333; pointer-events: none;
-
   }
-
   .frame-tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
-
   .frame-tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
 
-
-
   .crosshair-decor {
-
     position: absolute; width: 16px; height: 16px; color: #3a3a3a; pointer-events: none; user-select: none;
-
     transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-
   }
-
   .crosshair-decor::before, .crosshair-decor::after {
-
     content: ""; position: absolute; background: currentColor;
-
   }
-
   .crosshair-decor::before { top: 7px; left: 0; width: 16px; height: 2px; }
-
   .crosshair-decor::after { top: 0; left: 7px; width: 2px; height: 16px; }
 
-
-
   /* ─── TACTILE TAPE PLACARDS ─── */
-
   .tape-strip {
-
     position: absolute; background: rgba(255,255,255,0.07);
-
     backdrop-filter: blur(2px); border-left: 1px dashed rgba(255,255,255,0.2);
-
     border-right: 1px dashed rgba(255,255,255,0.2); transform: rotate(-3deg);
-
     z-index: 10; pointer-events: none;
-
   }
-
   .tape-tl { top: -14px; left: 20px; width: 80px; height: 20px; }
-
   .tape-br { bottom: -12px; right: 30px; width: 95px; height: 22px; transform: rotate(2deg); }
 
-
-
   /* ─── NEO-BRUTALIST NAV SYSTEM ─── */
-
   .nav {
-
     position: fixed; top: 0; left: 0; right: 0;
-
     height: var(--nav-h);
-
     background: #000;
-
     border-bottom: 3px solid var(--border-dark);
-
     box-shadow: 0 1px 0 var(--border);
-
     display: flex; align-items: center;
-
     padding: 0 32px;
-
     z-index: 2000;
-
   }
-
   .nav-logo {
-
     font-family: 'Space Mono', monospace;
-
     font-size: 11px; font-weight: 700; color: #fff;
-
     text-transform: uppercase; letter-spacing: 0.15em; line-height: 1.2;
-
   }
-
   .nav-logo span { color: var(--accent); position: relative; }
-
   .nav-spacer { flex: 1; }
 
-
-
   .portal-switcher-tabs {
-
     display: flex; background: #0b0b0b; border: 2px solid var(--border-dark); padding: 3px;
-
     box-shadow: 3px 3px 0 var(--border-dark); transform: rotate(-0.4deg);
-
   }
-
   .switcher-tab {
-
     padding: 8px 20px; font-family: 'Space Mono', monospace; font-size: 11px;
-
     text-transform: uppercase; color: var(--text-dim); background: transparent;
-
     border: none; cursor: pointer; font-weight: 700; transition: all 0.1s step-end;
-
   }
-
   .switcher-tab.active { background: var(--accent); color: #000; }
 
-
-
   .nav-avatar {
-
     padding: 7px 16px; font-size: 11px; font-family: 'Space Mono', monospace;
-
     color: #fff; border: 2px solid var(--border-dark); background: #151515;
-
     font-weight: 700; box-shadow: 3px 3px 0 var(--border-dark); text-transform: uppercase;
-
   }
-
-
 
   /* ─── CORE DISPLAY LAYOUT PAGES ─── */
-
-  .page { display: none; padding-top: calc(var(--nav-h) + 32px); min-height: 100vh; padding-bottom: 80px; }
-
+  .page { display: none; padding-top: var(--nav-h); height: calc(100vh - var(--nav-h)); overflow-y: auto; }
   .page.active { display: block; }
-
-
+  
+  #page-landing { overflow-y: hidden; }
 
   .poster-canvas {
-
-    max-width: 1240px; margin: 20px auto; padding: 0 32px;
-
-    display: grid; grid-template-columns: 1.15fr 1fr; gap: 56px; position: relative;
-
+    max-width: 1240px; margin: 0 auto; padding: 24px 32px;
+    display: grid; grid-template-columns: 1.15fr 1fr; gap: 48px; position: relative;
+    height: 100%; max-height: calc(100vh - var(--nav-h));
+  }
+  @media(max-width: 950px) { 
+    #page-landing { overflow-y: auto; }
+    .poster-canvas { grid-template-columns: 1fr; gap: 40px; height: auto; max-height: none; } 
   }
 
-  @media(max-width: 950px) { .poster-canvas { grid-template-columns: 1fr; gap: 40px; } }
-
-
-
-  .brand-manifesto-panel { display: flex; flex-direction: column; justify-content: flex-start; }
-
+  .brand-manifesto-panel { 
+    display: flex; flex-direction: column; justify-content: flex-start; 
+    height: 100%; overflow-y: auto; padding-right: 12px;
+  }
   
+  .brand-manifesto-panel::-webkit-scrollbar, .inner-scroll-card::-webkit-scrollbar { width: 6px; }
+  .brand-manifesto-panel::-webkit-scrollbar-thumb, .inner-scroll-card::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
 
   .giant-title {
-
-    font-family: 'Space Grotesk', sans-serif; font-size: 82px; font-weight: 700; line-height: 0.82;
-
-    text-transform: uppercase; letter-spacing: -0.04em; color: #fff; margin-bottom: 28px;
-
+    font-family: 'Space Grotesk', sans-serif; font-size: 68px; font-weight: 700; line-height: 0.85;
+    text-transform: uppercase; letter-spacing: -0.04em; color: #fff; margin-bottom: 16px;
   }
-
   .giant-title span.highlight-block {
-
     background: var(--accent); color: #000; padding: 0px 14px; display: inline-block;
-
-    transform: rotate(-1.2deg) translate(-4px, 4px); font-size: 76px;
-
-    box-shadow: 5px 5px 0 var(--border-dark);
-
+    transform: rotate(-1.2deg) translate(-4px, 2px); font-size: 62px;
+    box-shadow: 4px 4px 0 var(--border-dark);
   }
-
-
 
   .tape-label {
-
     background: #fff; color: #000; padding: 4px 12px; font-family: 'Space Mono', monospace;
-
     font-size: 11px; font-weight: 700; text-transform: uppercase;
-
     display: inline-block; transform: rotate(0.6deg); border: 2px solid #000; width: fit-content;
-
   }
-
-
 
   /* ─── PASTEBOARD PHYSICAL SURFACE MODULES ─── */
-
   .brutalist-card {
-
     background: var(--surface-card); border: 2px solid var(--border-dark);
-
-    box-shadow: 8px 8px 0px var(--border-dark); padding: 36px; position: relative; margin-bottom: 32px;
-
+    box-shadow: 8px 8px 0px var(--border-dark); padding: 28px; position: relative; margin-bottom: 32px;
   }
-
   .brutalist-card:hover .crosshair-decor { transform: rotate(90deg); color: var(--accent); }
-
   
-
   .card-header-mono {
-
     font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; text-transform: uppercase;
-
-    color: #fff; padding-bottom: 14px; margin-bottom: 28px; border-bottom: 2px dashed #262626;
-
+    color: #fff; padding-bottom: 12px; margin-bottom: 20px; border-bottom: 2px dashed #262626;
     display: flex; justify-content: space-between; align-items: center; letter-spacing: 0.05em;
-
   }
-
-
 
   /* ─── FORMS, LABELS, FIELDS ─── */
-
-  .control-group { margin-bottom: 24px; position: relative; }
-
+  .control-group { margin-bottom: 16px; position: relative; }
   .control-label {
-
     font-family: 'Space Mono', monospace; font-size: 10px; text-transform: uppercase;
-
-    color: var(--text-dim); display: block; margin-bottom: 8px; letter-spacing: 0.08em;
-
+    color: var(--text-dim); display: block; margin-bottom: 6px; letter-spacing: 0.08em;
   }
-
   .input-field {
-
-    width: 100%; padding: 14px 18px; background: #0b0b0b; border: 2px solid #222;
-
+    width: 100%; padding: 12px 16px; background: #0b0b0b; border: 2px solid #222;
     color: #fff; font-family: inherit; font-size: 13px; outline: none;
-
     transition: border-color 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s;
-
   }
-
   .input-field:focus { border-color: var(--accent); background: #0e0e0e; box-shadow: 0 0 12px var(--accent-glow); }
-
   select.input-field { cursor: pointer; }
 
-
-
   /* ─── INTERACTION TRIGGERS ─── */
-
   .form-submit {
-
-    width: 100%; padding: 18px; background: var(--accent); color: #000;
-
+    width: 100%; padding: 16px; background: var(--accent); color: #000;
     border: 2px solid var(--border-dark); font-family: 'Space Mono', monospace;
-
     font-size: 13px; font-weight: 700; text-transform: uppercase; cursor: pointer;
-
-    box-shadow: 4px 4px 0 var(--border-dark); transition: transform 0.05s, box-shadow 0.05s; margin-top: 16px;
-
+    box-shadow: 4px 4px 0 var(--border-dark); transition: transform 0.05s, box-shadow 0.05s; margin-top: 12px;
   }
-
   .form-submit:hover { background: var(--accent-hover); transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--border-dark); }
-
   .form-submit:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--border-dark); }
 
-
-
   .btn-action {
-
     padding: 12px 20px; background: #000; border: 2px solid #222; color: #fff;
-
     font-size: 11px; font-weight: 700; font-family: 'Space Mono', monospace;
-
     text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; gap: 10px;
-
     box-shadow: 3px 3px 0 var(--border-dark);
-
   }
-
   .btn-action:hover { border-color: #fff; background: var(--surface); }
-
   
-
   .btn-accent-sm {
-
     padding: 10px 18px; background: var(--accent); color: #000; border: 2px solid var(--border-dark);
-
     font-size: 11px; font-weight: 700; font-family: 'Space Mono', monospace; text-transform: uppercase; cursor: pointer;
-
   }
-
-
 
   /* ─── TIMELINE CHRONOLOGY LABELS ─── */
-
-  .journey-timeline-card { background: #090909; border: 2px dashed #222; padding: 28px; margin-top: 32px; }
-
-  .timeline-node { display: flex; gap: 20px; margin-bottom: 20px; border-bottom: 1px solid #181818; padding-bottom: 16px; }
-
+  .journey-timeline-card { background: #090909; border: 2px dashed #222; padding: 20px; margin-top: 20px; }
+  .timeline-node { display: flex; gap: 16px; margin-bottom: 14px; border-bottom: 1px solid #181818; padding-bottom: 12px; }
   .timeline-node:last-child { margin-bottom: 0; border: none; padding-bottom: 0; }
-
   .node-day { font-family: 'Space Mono', monospace; font-weight: 700; color: var(--accent); font-size: 12px; width: 56px; flex-shrink: 0; }
-
   .node-details ul { list-style: none; color: var(--text-dim); font-size: 12px; }
-
   .node-details ul li::before { content: "▪ "; color: var(--accent); font-size: 10px; margin-right: 4px; }
 
-
-
   /* ─── CONTROL TERMINAL INTERFACES ─── */
-
   .admin-dashboard-grid { max-width: 1380px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px; }
-
   .span-full { grid-column: span 2; }
-
   @media(max-width: 1050px) { .admin-dashboard-grid { grid-template-columns: 1fr; } .span-full { grid-column: span 1; } }
 
-
-
   .tag { padding: 4px 10px; font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; text-transform: uppercase; display: inline-block; }
-
   .tag-green { background: var(--accent); color: #000; border: 1px solid #000; }
-
   .tag-red { background: rgba(255,45,45,0.12); color: var(--red); border: 1px dashed var(--red); }
-
   .tag-blue { background: transparent; color: var(--blue); border: 1px dashed var(--blue); }
-
-
+  .tag-yellow { background: var(--yellow); color: #000; border: 1px solid #000; }
 
   .grid-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-
   @media(max-width: 650px) { .grid-metrics { grid-template-columns: repeat(2, 1fr); } }
-
   .metric-block { background: #0a0a0a; border: 2px solid var(--border-dark); padding: 24px; box-shadow: 3px 3px 0 #111; position: relative; }
-
   .metric-value { font-family: 'Space Mono', monospace; font-size: 36px; font-weight: 700; color: #fff; margin-top: 8px; }
 
-
-
-  .ledger-scroll-wrapper { overflow-x: auto; max-height: 380px; overflow-y: auto; background: #000; border: 2px solid var(--border-dark); }
-
+  .ledger-scroll-wrapper { overflow-x: auto; max-height: 350px; overflow-y: auto; background: #000; border: 2px solid var(--border-dark); }
   .matrix-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
-
   .matrix-table th { background: #080808; padding: 16px; color: var(--text-dim); font-family: 'Space Mono'; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #1a1a1a; }
-
   .matrix-table td { padding: 16px; border-bottom: 1px solid #111; color: var(--text-dim); }
-
   .matrix-table tr:hover td { color: #fff; background: rgba(255,255,255,0.01); }
 
-
-
   .data-list { display: flex; flex-direction: column; gap: 12px; max-height: 320px; overflow-y: auto; }
-
   .data-item { background: #0a0a0a; border: 1px solid #1c1c1c; padding: 18px; display: flex; justify-content: space-between; align-items: center; }
-
   .member-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-
   .member-pill { background: #141414; border: 1px dashed #2a2a2a; font-size: 11px; padding: 5px 12px; font-family: 'Space Mono', monospace; display: flex; align-items: center; }
-
   .member-pill span { color: var(--red); cursor: pointer; font-weight: 700; margin-left: 10px; }
 
-
-
   .member-list { display: flex; flex-direction: column; gap: 14px; }
-
   .member-row-card { background: #080808; border: 1px solid #1c1c1c; padding: 18px; display: flex; align-items: center; gap: 20px; }
-
   .member-index-avatar { width: 36px; height: 36px; background: #111; border: 1px dashed #2a2a2a; display: flex; align-items: center; justify-content: center; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--accent); font-weight: 700; }
-
   .inner-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; width: 100%; }
-
   @media(max-width: 800px) { .inner-grid-3 { grid-template-columns: 1fr; } }
 
-
-
   /* ─── ISOLATED WORKSPACE ENVIRONMENT ─── */
-
   .workspace-layout-container { max-width: 1480px; margin: 0 auto; padding: 0 32px; }
-
   .countdown-banner {
-
     background: var(--surface-card); border: 2px solid var(--border-dark); padding: 28px;
-
     display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;
-
     box-shadow: 6px 6px 0px var(--border-dark); position: relative;
-
   }
-
   .broadcast-strip {
-
     background: #fff; color: #000; padding: 24px; border: 3px solid #000;
-
     margin-bottom: 40px; font-weight: 700; display: none; transform: rotate(-0.2deg);
-
     box-shadow: 4px 4px 0 var(--border-dark);
-
   }
-
   .broadcast-strip.active { display: block; }
-
   
-
   .sandbox-workspace-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 32px; }
-
   @media(max-width: 1100px) { .sandbox-workspace-grid { grid-template-columns: 1fr; } }
-
   
-
   .editor-column { background: var(--surface-card); border: 2px solid var(--border-dark); display: flex; flex-direction: column; height: 550px; box-shadow: 4px 4px 0 var(--border-dark); }
-
   .editor-header { background: #000; padding: 14px 20px; font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; color: var(--text-dim); display: flex; justify-content: space-between; border-bottom: 1px solid #1c1c1c; }
-
   .editor-header span { color: var(--accent); }
-
   .code-area { flex: 1; width: 100%; background: #070707; color: #b1e813; border: none; padding: 20px; font-family: 'Space Mono', monospace; font-size: 12px; resize: none; outline: none; line-height: 1.65; }
 
-
-
   /* Error Overlay Packaging */
-
   .error-message { color: var(--red); font-size: 12px; margin-bottom: 20px; display: none; font-family: 'Space Mono', monospace; padding: 14px; background: rgba(255,45,45,0.04); border: 1px dashed var(--red); }
-
   .success-message { color: var(--accent); font-size: 12px; margin-bottom: 20px; display: none; font-family: 'Space Mono', monospace; padding: 14px; background: var(--accent-glow); border: 1px dashed var(--accent); }
 
-
-
   .dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px; }
-
   .dialog-overlay.active { display: flex; }
-
   .dialog-box { background: var(--surface-card); border: 2px solid var(--border-dark); padding: 48px; width: 100%; max-width: 500px; text-align: center; box-shadow: 12px 12px 0 var(--border-dark); position: relative; }
 
-
-
   .thanks-layout { max-width: 540px; margin: 100px auto; text-align: center; background: var(--surface-card); border: 2px solid var(--border-dark); box-shadow: 8px 8px 0 var(--border-dark); padding: 72px 48px; }
-
   .zip-item { display: flex; align-items: center; justify-content: space-between; background: #000; border: 1px solid #1c1c1c; padding: 16px 20px; margin-bottom: 14px; font-family: 'Space Mono', monospace; font-size: 12px; }
-
   
-
   .flex-between { display: flex; justify-content: space-between; align-items: center; }
-
   .mt-16 { margin-top: 16px; }
-
   .mb-16 { margin-bottom: 16px; }
-
   .mono { font-family: 'Space Mono', monospace; }
-
   .text-accent { color: var(--accent); }
-
 </style>
-
 </head>
-
 <body>
 
-
-
 <nav class="nav">
-
   <div class="nav-logo">REAL IDEAS // REAL IMPACT // <span>DESIGNVERSE</span></div>
-
   <div class="nav-spacer"></div>
-
   
-
   <div class="portal-switcher-tabs">
-
     <button class="switcher-tab active" id="tab-user" onclick="handleWorkspaceTabRouting('user')">User Portal</button>
-
     <button class="switcher-tab" id="tab-admin" onclick="handleWorkspaceTabRouting('admin')">Admin Hub</button>
-
   </div>
-
-
 
   <div class="nav-avatar" id="current-user-avatar">👤 GUEST</div>
-
 </nav>
 
-
-
 <div id="page-landing" class="page active">
-
   <div class="poster-canvas">
-
     
-
     <div class="brand-manifesto-panel">
-
-      <div class="giant-title">DESIGNVERSE<br>2026<br><span class="highlight-block">HACKATHON</span></div>
-
-      <p style="color: var(--text-dim); margin-bottom: 28px; font-size: 14px; max-width: 480px; line-height: 1.65;">
-
+      <div class="giant-title">DESIGNVERSE<br>2026<br><span class="highlight-block">CAMPUS</span></div>
+      <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 14px; max-width: 480px; line-height: 1.65;">
         A 4-day design challenge to solve real-world problems through research, empathy, and creative design thinking.
-
       </p>
-
       
-
-      <div style="background: #000; border: 2px solid var(--border-dark); padding: 24px; position: relative; box-shadow: 4px 4px 0 #0d0d0d;">
-
+      <div style="background: #000; border: 2px solid var(--border-dark); padding: 20px; position: relative; box-shadow: 4px 4px 0 #0d0d0d;">
         <div class="blueprint-frame frame-tl"></div>
-
-        <div class="tape-label" style="background: var(--accent); color:#000; font-size: 10px; margin-bottom:14px; transform:rotate(-0.5deg);">CURRENT TEAMS REGISTERED</div>
-
-        <div id="studentHelpLookupList" style="font-size: 12px; font-family: 'Space Mono'; color: var(--text-dim); max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
-
+        <div class="tape-label" style="background: var(--accent); color:#000; font-size: 10px; margin-bottom:12px; transform:rotate(-0.5deg);">CURRENT TEAMS REGISTERED</div>
+        <div id="studentHelpLookupList" style="font-size: 12px; font-family: 'Space Mono'; color: var(--text-dim); max-height: 110px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
         </div>
-
       </div>
-
-
 
       <div class="journey-timeline-card">
-
-        <div class="tape-label" style="margin-bottom:20px;">4-DAY JOURNEY PROGRAM</div>
-
+        <div class="tape-label" style="margin-bottom:16px;">4-DAY JOURNEY PROGRAM</div>
         <div class="timeline-node">
-
           <div class="node-day">DAY 01</div>
-
           <div class="node-details"><ul><li>Speaker Session & Meetups</li><li>Problem Statement Reveal</li></ul></div>
-
         </div>
-
         <div class="timeline-node">
-
           <div class="node-day">DAY 02</div>
-
           <div class="node-details"><ul><li>Design Lab Opens • Live Work Loop</li><li>Mentorship & Guidance Sessions</li></ul></div>
-
         </div>
-
         <div class="timeline-node">
-
           <div class="node-day">DAY 03</div>
-
           <div class="node-details"><ul><li>Submit Your Design Solution</li><li>Finalist Selection Announcements</li></ul></div>
-
         </div>
-
         <div class="timeline-node">
-
           <div class="node-day">DAY 04</div>
-
           <div class="node-details"><ul><li>Live Presentation & Q&A With Judges</li><li>Winners Crowned</li></ul></div>
-
         </div>
-
       </div>
-
     </div>
 
+    <div style="height: 100%; overflow-y: auto; padding-right: 4px;" class="inner-scroll-card">
+      <div class="brutalist-card" style="background: #111111; border-width: 2px; margin-bottom: 0;">
+        <div class="tape-strip tape-tl"></div>
+        <div class="tape-strip tape-br"></div>
+        
+        <div class="crosshair-decor" style="top: 14px; left: 14px;"></div>
+        <div class="crosshair-decor" style="top: 14px; right: 14px;"></div>
 
-
-    <div class="brutalist-card" style="background: #111111; border-width: 2px;">
-
-      <div class="tape-strip tape-tl"></div>
-
-      <div class="tape-strip tape-br"></div>
-
-      
-
-      <div class="crosshair-decor" style="top: 14px; left: 14px;"></div>
-
-      <div class="crosshair-decor" style="top: 14px; right: 14px;"></div>
-
-
-
-      <div class="card-header-mono" style="padding-left:14px; padding-right:14px;">
-
-        <span>Team Sign-In Gateway</span> 
-
-        <span style="color:var(--accent); font-size:10px;">[ LOGIN ]</span>
-
-      </div>
-
-      
-
-      <div class="error-message" id="studentLoginError"></div>
-
-      
-
-      <div class="control-group">
-
-        <label class="control-label">Team Name or ID</label>
-
-        <input type="text" id="studTeamNo" class="input-field mono" placeholder="e.g., Team 1">
-
-      </div>
-
-
-
-      <div class="control-group">
-
-        <label class="control-label">Unique Event Code</label>
-
-        <input type="text" id="studEventId" class="input-field mono" placeholder="5-Digit Code" maxlength="5">
-
-      </div>
-
-
-
-      <div style="border-top: 2px dashed #262626; margin: 32px 0; padding-top: 24px;">
-
-        <label class="control-label" style="color: var(--accent); margin-bottom: 16px; font-weight:700;">Verify Your Team Members (Enter All 3 Names)</label>
-
-        <div class="control-group" style="margin-bottom: 12px;">
-
-          <input type="text" id="studM1" class="input-field" placeholder="Member 1 Full Name">
-
+        <div class="card-header-mono" style="padding-left:14px; padding-right:14px;">
+          <span>Team Sign-In Gateway</span> 
+          <span style="color:var(--accent); font-size:10px;">[ LOGIN ]</span>
+        </div>
+        
+        <div class="error-message" id="studentLoginError"></div>
+        
+        <div class="control-group">
+          <label class="control-label">Team Name or ID</label>
+          <input type="text" id="studTeamNo" class="input-field mono" placeholder="e.g., Team 1">
         </div>
 
-        <div class="control-group" style="margin-bottom: 12px;">
-
-          <input type="text" id="studM2" class="input-field" placeholder="Member 2 Full Name">
-
+        <div class="control-group">
+          <label class="control-label">Unique Event Code</label>
+          <input type="text" id="studEventId" class="input-field mono" placeholder="5-Digit Code" maxlength="5">
         </div>
 
-        <div class="control-group" style="margin-bottom: 0;">
-
-          <input type="text" id="studM3" class="input-field" placeholder="Member 3 Full Name">
-
+        <div style="border-top: 2px dashed #262626; margin: 24px 0; padding-top: 16px;">
+          <label class="control-label" style="color: var(--accent); margin-bottom: 12px; font-weight:700;">Verify Your Team Members (Enter All 3 Names)</label>
+          <div class="control-group" style="margin-bottom: 10px;">
+            <input type="text" id="studM1" class="input-field" placeholder="Member 1 Full Name">
+          </div>
+          <div class="control-group" style="margin-bottom: 10px;">
+            <input type="text" id="studM2" class="input-field" placeholder="Member 2 Full Name">
+          </div>
+          <div class="control-group" style="margin-bottom: 0;">
+            <input type="text" id="studM3" class="input-field" placeholder="Member 3 Full Name">
+          </div>
         </div>
 
+        <button class="form-submit" onclick="attemptStudentLogin()">Verify Team & Open Workspace →</button>
       </div>
-
-
-
-      <button class="form-submit" onclick="attemptStudentLogin()">Verify Team & Open Workspace →</button>
-
     </div>
-
-
 
   </div>
-
 </div>
-
-
 
 <div id="page-admin-auth" class="page">
-
   <div style="display: flex; justify-content: center; align-items: center; min-height: calc(100vh - var(--nav-h) - 120px); padding: 24px;">
-
     <div class="brutalist-card" style="width: 100%; max-width: 440px; background: #111111;">
-
       <div class="crosshair-decor" style="top:14px; left:14px;"></div>
-
       <div class="card-header-mono">Admin Dashboard Access</div>
-
       <div class="error-message" id="authError">Access Denied: Admin username or email not recognized.</div>
-
       <div class="control-group">
-
         <label class="control-label">Admin Username</label>
-
         <input type="text" id="adminUser" class="input-field mono" placeholder="e.g., naman">
-
       </div>
-
       <div class="control-group">
-
         <label class="control-label">Admin Email Address</label>
-
         <input type="email" id="adminEmail" class="input-field mono" placeholder="name@domain.com">
-
       </div>
-
       <button class="form-submit" onclick="attemptAdminAccess()">Verify Identity & Login</button>
-
     </div>
-
   </div>
-
 </div>
 
-
-
 <div id="page-admin-dashboard" class="page">
-
   <div class="admin-dashboard-grid">
-
     <div class="span-full flex-between" style="margin-bottom: 12px; border-bottom: 2px solid var(--border-dark); padding-bottom: 20px;">
-
       <div>
-
         <div style="font-size: 11px; color: var(--accent); font-family: 'Space Mono'; font-weight:700; letter-spacing:0.12em;">ORGANIZER CENTRAL COMMAND</div>
-
         <h2 id="admin-banner-title" style="font-family: 'Space Grotesk'; font-size:38px; font-weight:700; text-transform:uppercase; letter-spacing:-0.02em;">Event Dashboard</h2>
-
       </div>
-
       <button class="btn-action" style="color: var(--red); border-color: var(--red);" onclick="logoutAdmin()">Log Out</button>
-
     </div>
-
-
 
     <div class="span-full brutalist-card">
-
       <div class="card-header-mono">Event Attendance & Team Trackers</div>
-
       <div class="grid-metrics">
-
         <div class="metric-block">
-
           <label class="control-label">Registered Teams</label>
-
           <div class="metric-value" id="statTotalTeams">2</div>
-
         </div>
-
         <div class="metric-block">
-
           <label class="control-label">Total Participants</label>
-
           <div class="metric-value" id="statTotalHackers">6</div>
-
         </div>
-
         <div class="metric-block">
-
           <label class="control-label" style="color: var(--accent);">Complete Teams (3 Members)</label>
-
           <div class="metric-value" style="color: var(--accent);" id="statReadyTeams">2</div>
-
         </div>
-
         <div class="metric-block">
-
-          <label class="control-label" style="color: var(--yellow);">Incomplete Teams</label>
-
-          <div class="metric-value" style="color: var(--yellow);" id="statPendingTeams">0</div>
-
+          <label class="control-label" style="color: var(--yellow);">First-Time Logins Active</label>
+          <div class="metric-value" style="color: var(--yellow);" id="statFirstLogins">0</div>
         </div>
-
       </div>
-
     </div>
 
-
-
-    <div class="brutalist-card" id="admin-team-auth-section">
-
-      <div class="crosshair-decor" style="top:14px; left:14px;"></div>
-
+    <div class="span-full brutalist-card" id="admin-first-time-tracking-section">
       <div class="card-header-mono">
-
-        <span>Team Registration Tester</span>
-
-        <span class="tag tag-blue" id="auth-status-badge">Awaiting Input</span>
-
+        <span>🆕 New Users / First-Time Access Monitoring</span>
+        <span class="tag tag-yellow" id="live-refresh-alert-badge">Auto Sync Active</span>
       </div>
-
-      <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 24px; font-family:'Space Mono';">
-
-        Manually test team names and matching members here before permanently adding them to the database.
-
-      </p>
-
-
-
-      <div class="error-message" id="auth-error-msg"></div>
-
-      <div class="success-message" id="auth-success-msg"></div>
-
-
-
-      <form id="team-auth-form" onsubmit="handleRegionalTeamAuthentication(event)">
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-
-          <div class="control-group">
-
-            <label class="control-label">Team Name</label>
-
-            <input type="text" id="auth-team-designation" class="input-field mono" placeholder="e.g., Team 3" required />
-
-          </div>
-
-          <div class="control-group">
-
-            <label class="control-label">Unique 5-Digit Code</label>
-
-            <input type="text" id="auth-event-token" class="input-field mono" placeholder="Code Token" maxlength="5" required />
-
-          </div>
-
+      
+      <div style="display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; background: #080808; padding: 14px; border: 1px dashed var(--border);">
+        <div style="flex: 1; min-width: 200px;">
+          <label class="control-label" style="margin-bottom:4px;">Search Teams</label>
+          <input type="text" id="firstTimeSearchFilter" class="input-field" style="padding: 8px 12px;" placeholder="Filter by team identifier name..." oninput="renderFirstTimeAccessLedger()">
         </div>
-
-
-
-        <div class="control-group mt-16" style="border-top: 2px dashed #222; padding-top: 24px;">
-
-          <div class="flex-between mb-16">
-
-            <label class="control-label" style="margin: 0; font-weight:700;">Add Team Member Names & Custom Roles</label>
-
-            <span class="mono" style="font-size: 11px; color: var(--text-dim);" id="roster-count-lbl">0 / 3 Added</span>
-
-          </div>
-
-          
-
-          <div class="member-list" id="auth-roster-payload-container">
-
-            <div class="member-row-card">
-
-              <div class="member-index-avatar">01</div>
-
-              <div class="inner-grid-3">
-
-                <input type="text" class="input-field roster-name" placeholder="Full Name" required />
-
-                <input type="text" class="input-field roster-link" placeholder="Portfolio / Profile Link (Optional)">
-
-                <select class="input-field roster-role">
-
-                  <option>Team Lead</option>
-
-                  <option>Developer</option>
-
-                  <option>Designer</option>
-
-                </select>
-
-              </div>
-
-            </div>
-
-            <div class="member-row-card">
-
-              <div class="member-index-avatar">02</div>
-
-              <div class="inner-grid-3">
-
-                <input type="text" class="input-field roster-name" placeholder="Full Name" required />
-
-                <input type="text" class="input-field roster-link" placeholder="Portfolio / Profile Link (Optional)">
-
-                <select class="input-field roster-role">
-
-                  <option>Developer</option>
-
-                  <option>Team Lead</option>
-
-                  <option>Designer</option>
-
-                </select>
-
-              </div>
-
-            </div>
-
-            <div class="member-row-card">
-
-              <div class="member-index-avatar">03</div>
-
-              <div class="inner-grid-3">
-
-                <input type="text" class="input-field roster-name" placeholder="Full Name" required />
-
-                <input type="text" class="input-field roster-link" placeholder="Portfolio / Profile Link (Optional)">
-
-                <select class="input-field roster-role">
-
-                  <option>Designer</option>
-
-                  <option>Team Lead</option>
-
-                  <option>Developer</option>
-
-                </select>
-
-              </div>
-
-            </div>
-
-          </div>
-
+        <div style="width: 180px;">
+          <label class="control-label" style="margin-bottom:4px;">Filter Activity Status</label>
+          <select id="firstTimeStatusFilter" class="input-field" style="padding: 8px 12px;" onchange="renderFirstTimeAccessLedger()">
+            <option value="all">All States</option>
+            <option value="new">Status: New</option>
+            <option value="active">Status: Active</option>
+          </select>
         </div>
-
-
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:24px;">
-
-          <button type="button" class="btn-action" style="justify-content: center;" onclick="commitAuthPayloadToGlobalRegistry()">
-
-            📥 Save Team to Master Directory
-
-          </button>
-
-          <button type="submit" class="form-submit" style="margin: 0; height:auto;">
-
-            Test If Team Exists →
-
-          </button>
-
-        </div>
-
-      </form>
-
-    </div>
-
-
-
-    <div class="brutalist-card" id="member-ledger-section">
-
-      <div class="card-header-mono">
-
-        <span>📋 Master Attendee Directory</span>
-
-        <span class="tag tag-green" id="ledger-count-badge">6 Registered Attendees</span>
-
       </div>
 
       <div class="ledger-scroll-wrapper">
-
         <table class="matrix-table">
-
           <thead>
-
             <tr>
-
-              <th>Full Name</th>
-
-              <th>Assigned Event Role</th>
-
-              <th>Assigned Team</th>
-
-              <th>Team Code</th>
-
-              <th>Profile Links</th>
-
+              <th>Team Designator Name</th>
+              <th>Email / Code Token ID</th>
+              <th>Registration Date</th>
+              <th>First Login Record Timestamp</th>
+              <th>Activity Status Profile</th>
             </tr>
-
           </thead>
-
-          <tbody id="memberLedgerTableBody"></tbody>
-
+          <tbody id="firstTimeAccessTableBody"></tbody>
         </table>
-
       </div>
-
     </div>
 
+    <div class="brutalist-card" id="admin-team-auth-section">
+      <div class="crosshair-decor" style="top:14px; left:14px;"></div>
+      <div class="card-header-mono">
+        <span>Team Registration Tester</span>
+        <span class="tag tag-blue" id="auth-status-badge">Awaiting Input</span>
+      </div>
+      <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 24px; font-family:'Space Mono';">
+        Manually test team names and matching members here before permanently adding them to the database.
+      </p>
 
+      <div class="error-message" id="auth-error-msg"></div>
+      <div class="success-message" id="auth-success-msg"></div>
+
+      <form id="team-auth-form" onsubmit="handleRegionalTeamAuthentication(event)">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+          <div class="control-group">
+            <label class="control-label">Team Name</label>
+            <input type="text" id="auth-team-designation" class="input-field mono" placeholder="e.g., Team 3" required />
+          </div>
+          <div class="control-group">
+            <label class="control-label">Unique 5-Digit Code</label>
+            <input type="text" id="auth-event-token" class="input-field mono" placeholder="Code Token" maxlength="5" required />
+          </div>
+        </div>
+
+        <div class="control-group mt-16" style="border-top: 2px dashed #222; padding-top: 24px;">
+          <div class="flex-between mb-16">
+            <label class="control-label" style="margin: 0; font-weight:700;">Add Team Member Names & Custom Roles</label>
+            <span class="mono" style="font-size: 11px; color: var(--text-dim);" id="roster-count-lbl">0 / 3 Added</span>
+          </div>
+          
+          <div class="member-list" id="auth-roster-payload-container">
+            <div class="member-row-card">
+              <div class="member-index-avatar">01</div>
+              <div class="inner-grid-3">
+                <input type="text" class="input-field roster-name" placeholder="Full Name" required />
+                <input type="text" class="input-field roster-link" placeholder="Portfolio / Profile Link (Optional)">
+                <select class="input-field roster-role">
+                  <option>Team Lead</option>
+                  <option>Developer</option>
+                  <option>Designer</option>
+                </select>
+              </div>
+            </div>
+            <div class="member-row-card">
+              <div class="member-index-avatar">02</div>
+              <div class="inner-grid-3">
+                <input type="text" class="input-field roster-name" placeholder="Full Name" required />
+                <input type="text" class="input-field roster-link" placeholder="Portfolio / Profile Link (Optional)">
+                <select class="input-field roster-role">
+                  <option>Developer</option>
+                  <option>Team Lead</option>
+                  <option>Designer</option>
+                </select>
+              </div>
+            </div>
+            <div class="member-row-card">
+              <div class="member-index-avatar">03</div>
+              <div class="inner-grid-3">
+                <input type="text" class="input-field roster-name" placeholder="Full Name" required />
+                <input type="text" class="input-field roster-link" placeholder="Portfolio / Profile Link (Optional)">
+                <select class="input-field roster-role">
+                  <option>Designer</option>
+                  <option>Team Lead</option>
+                  <option>Developer</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:24px;">
+          <button type="button" class="btn-action" style="justify-content: center;" onclick="commitAuthPayloadToGlobalRegistry()">
+            📥 Save Team to Master Directory
+          </button>
+          <button type="submit" class="form-submit" style="margin: 0; height:auto;">
+            Test If Team Exists →
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="brutalist-card" id="member-ledger-section">
+      <div class="card-header-mono">
+        <span>📋 Master Attendee Directory</span>
+        <span class="tag tag-green" id="ledger-count-badge">6 Registered Attendees</span>
+      </div>
+      <div class="ledger-scroll-wrapper">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>Full Name</th>
+              <th>Assigned Event Role</th>
+              <th>Assigned Team</th>
+              <th>Team Code</th>
+              <th>Profile Links</th>
+            </tr>
+          </thead>
+          <tbody id="memberLedgerTableBody"></tbody>
+        </table>
+      </div>
+    </div>
 
     <div class="brutalist-card">
-
       <div class="card-header-mono">Main Event Countdown Clock Control</div>
-
       <div style="display: flex; align-items: center; gap: 16px; margin-top: 12px; background:#000; padding:20px; border:2px solid var(--border-dark);">
-
         <button class="btn-action" onclick="adjustGlobalTime(-15)">-15m</button>
-
         <button class="btn-action" onclick="adjustGlobalTime(-60)">-1h</button>
-
         <div style="font-family: 'Space Mono'; font-size: 38px; font-weight: 700; color: var(--accent); flex:1; text-align:center; letter-spacing:0.05em;" id="adminClockDisplay">71:57:39</div>
-
         <button class="btn-action" onclick="adjustGlobalTime(60)">+1h</button>
-
         <button class="btn-action" onclick="adjustGlobalTime(15)">+15m</button>
-
       </div>
-
     </div>
-
-
 
     <div class="brutalist-card">
-
       <div class="card-header-mono">Broadcast Problem Statement to All Teams</div>
-
       <div class="control-group">
-
         <textarea id="challengeInput" class="input-field mono" rows="2" style="resize:none; background:#000; border-color:#2c2c2c;">Design and build a high-performance, visual workspace dashboard that keeps teams focused and protects custom design code entries from unwanted copying.</textarea>
-
       </div>
-
       <button class="form-submit" id="broadcastBtn" style="margin: 0;" onclick="toggleProblemRelease()">Send Problem Statement to Workspace</button>
-
     </div>
-
-
 
     <div class="span-full brutalist-card">
-
       <div class="card-header-mono">
-
         <span>Quick Team Creator Tool</span>
-
         <button class="btn-action" style="font-size:10px; padding:6px 12px;" onclick="triggerAutoTokenGen()">🎲 Autogenerate Team Code</button>
-
       </div>
-
       
-
       <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:20px; margin-bottom: 28px; background: #0a0a0a; padding: 24px; border: 2px solid var(--border-dark);">
-
         <div class="control-group" style="margin:0;">
-
           <label class="control-label">1. Enter New Team Name</label>
-
           <input type="text" id="newTeamName" class="input-field" placeholder="e.g., Team 3">
-
         </div>
-
         <div class="control-group" style="margin:0;">
-
           <label class="control-label">2. 5-Digit Access Code</label>
-
           <input type="text" id="newEventId" class="input-field mono" placeholder="Click Generator Above" maxlength="5">
-
         </div>
-
         <div style="display:flex; align-items:flex-end;">
-
           <button class="form-submit" style="margin: 0; padding: 16px 24px;" onclick="commitTeamToRegistry()">Create Empty Team</button>
-
         </div>
-
       </div>
-
-
 
       <div style="border-top: 2px dashed #222; padding-top: 24px; margin-bottom: 24px;">
-
         <label class="control-label" style="color: var(--yellow); font-weight:700; margin-bottom:14px;">Add a Single Participant to an Existing Team Slot</label>
-
         <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:20px; align-items: flex-end;">
-
           <div class="control-group" style="margin:0;">
-
             <label class="control-label">Select Destination Team</label>
-
             <select id="targetTeamSelector" class="input-field mono"></select>
-
           </div>
-
           <div class="control-group" style="margin:0;">
-
             <label class="control-label">Participant's Full Name</label>
-
             <input type="text" id="newMemberName" class="input-field" placeholder="e.g., Jane Watson">
-
           </div>
-
           <button class="btn-action" style="height: 50px; padding: 0 28px;" onclick="commitMemberToTeam()">Add Participant</button>
-
         </div>
-
       </div>
-
-
 
       <div style="margin-top: 36px;">
-
         <label class="control-label" style="border-bottom:1px solid #222; padding-bottom:6px; margin-bottom:16px;">Active Event Team Log Records</label>
-
         <div class="data-list" id="registeredTeamsLog"></div>
-
       </div>
-
     </div>
-
-
 
     <div class="span-full brutalist-card">
-
       <div class="card-header-mono">Submitted Solutions Vault (.ZIP Files)</div>
-
       <div class="data-list" id="adminZipRepository">
-
         <div class="text-muted" style="text-align: center; padding: 48px; font-family:'Space Mono'; font-size:12px; color:var(--text-muted);">Awaiting team design solutions to be uploaded from student work areas...</div>
-
       </div>
-
     </div>
-
   </div>
-
 </div>
-
-
 
 <div id="page-workspace-view" class="page">
-
   <div class="workspace-layout-container">
-
     
-
     <div class="countdown-banner">
-
       <div class="crosshair-decor" style="top:10px; left:10px;"></div>
-
       <div>
-
         <div style="font-size: 11px; color: var(--text-dim); font-family: 'Space Mono'; text-transform: uppercase; font-weight:700; letter-spacing:0.08em;">Time Remaining for Hack Submissions</div>
-
         <div style="font-size: 60px; font-family: 'Space Mono'; font-weight: 700; color: var(--accent); line-height:1.1; margin-top:4px;" id="workspaceClockDisplay">71:57:39</div>
-
       </div>
-
       <div style="text-align: right;">
-
         <div style="font-family: 'Space Mono'; font-weight: 700; color: #fff; font-size:18px; letter-spacing:-0.01em;" id="activeWorkspaceTeamTag">ACTIVE WORKSPACE: NONE</div>
-
         <div style="font-size: 12px; color: var(--text-dim); font-family:'Space Mono'; margin-top:6px;" id="activeWorkspaceMembersTag">No active team members linked.</div>
-
       </div>
-
     </div>
-
-
 
     <div class="broadcast-strip" id="hackerProblemBanner">
-
       <div style="font-family: 'Space Mono'; font-weight:700; font-size: 11px; letter-spacing:0.12em; color:#666; text-transform:uppercase; margin-bottom:6px;">📢 CHOSEN PROBLEM STATEMENT RELEASED:</div>
-
       <div id="broadcastMessageText" style="font-size: 16px; line-height:1.45;"></div>
-
     </div>
-
-
 
     <div class="flex-between" style="margin-bottom: 24px; align-items: flex-end; border-bottom:2px solid var(--border-dark); padding-bottom:16px;">
-
       <div>
-
         <h3 style="font-family: 'Space Mono', monospace; font-size: 20px; font-weight:700; letter-spacing:-0.02em;">DESIGNLAB_MAIN_WORKSPACE</h3>
-
         <p style="font-size:12px; color:var(--text-dim); font-family:'Space Mono'; margin-top:2px;">Secure sandbox area is active. Standard copying and right-clicks are temporarily restricted.</p>
-
       </div>
-
       <button class="form-submit" style="margin: 0; width: auto; padding: 16px 36px;" onclick="triggerPermanentSubmitDialog()">🚀 Submit and Lock Design Solution</button>
-
     </div>
-
-
 
     <div class="sandbox-workspace-grid">
-
       <div class="editor-column">
-
         <div class="editor-header"><div>File <span>index.html</span></div> <div style="font-size:9px; color:#444;">[ WORKING LAYOUT ]</div></div>
-
         <textarea class="code-area" id="editorIndex" spellcheck="false">&lt;!DOCTYPE html&gt;
-
 &lt;html&gt;
-
 &lt;head&gt;
-
     &lt;link rel="stylesheet" href="style.css"&gt;
-
 &lt;/head&gt;
-
 &lt;body&gt;
-
     &lt;h1&gt;Design Workspace Ready&lt;/h1&gt;
-
     &lt;script src="js.js"&gt;&lt;/script&gt;
-
 &lt;/body&gt;
-
 &lt;/html&gt;</textarea>
-
       </div>
 
-
-
       <div class="editor-column">
-
         <div class="editor-header"><div>File <span>style.css</span></div> <div style="font-size:9px; color:#444;">[ WORKING STYLES ]</div></div>
-
         <textarea class="code-area" id="editorStyle" spellcheck="false">body {
-
     background: #050505;
-
     color: #f0f0f0;
-
     font-family: sans-serif;
-
 }</textarea>
-
       </div>
-
-
 
       <div class="editor-column">
-
         <div class="editor-header"><div>File <span>js.js</span></div> <div style="font-size:9px; color:#444;">[ WORKING LOGIC ]</div></div>
-
         <textarea class="code-area" id="editorJs" spellcheck="false">console.log("Team creative environment loaded successfully.");</textarea>
-
       </div>
-
     </div>
 
-
-
   </div>
-
 </div>
-
-
 
 <div id="page-thank-you" class="page">
-
   <div class="thanks-layout">
-
     <div style="font-size: 72px; color: var(--accent); margin-bottom: 20px; font-weight:700; line-height:1;">✓</div>
-
     <div class="dialog-title-text" style="color: var(--accent); font-size:26px; letter-spacing:-0.03em;">Solution Uploaded Successfully</div>
-
     <p class="dialog-body-text" style="font-size:14px; max-width:440px; margin: 0 auto 36px auto; line-height:1.6;">
-
       Your design project files have been packaged and locked. They are now safely submitted into the organizers' database for judging.
-
     </p>
-
     <button class="form-submit" style="width:auto; padding:16px 32px; display:inline-block;" onclick="logoutStudent()">Exit Workspace Session</button>
-
   </div>
-
 </div>
-
-
 
 <div class="dialog-overlay" id="confirmSubmitDialog">
-
   <div class="dialog-box">
-
     <div class="dialog-title-text" style="color: var(--yellow); font-size:18px;">⚠️ Confirm Permanent Solution Submission?</div>
-
     <p class="dialog-body-text">This action cannot be undone. Once submitted, your workspace will be locked, and your designs will be sent directly to the judging vault.</p>
-
     <div class="dialog-actions">
-
       <button class="btn-action" onclick="dismissSubmitDialog()">Go Back to Editor</button>
-
       <button class="btn-accent-sm" style="background: var(--red); color: #fff; border-color:var(--border-dark);" onclick="executeFinalPublishChain()">Lock and Submit Design</button>
-
     </div>
-
   </div>
-
 </div>
 
-
-
 <script>
-
   let timeInSeconds = 71 * 3600 + 57 * 60 + 39; 
-
   let currentTimerInterval = null;
-
   let activeAdminUser = null;
-
   let authenticatedStudentTeam = null;
-
   let isProblemRevealed = false;
 
-
-
   const verifiedSystemAdmins = [
-
     { user: 'naman', email: 'naman@gmail.com' },
-
     { user: 'palak', email: 'palak@gmail.com' }
-
   ];
 
-
-
+  /* Core Database with Enriched State Profiles */
   let systemTeams = [
-
     { 
-
       id: "11111", 
-
       name: "Team 1", 
-
       members: ["Aman", "Rohan", "Sonal"],
-
+      registration_date: "2026-06-11",
+      is_first_login: true,
+      first_login_timestamp: "Awaiting Session...",
       details: [
-
         { name: "Aman", role: "Team Lead", link: "internal://node-aman" },
-
         { name: "Rohan", role: "Developer", link: "internal://node-rohan" },
-
         { name: "Sonal", role: "Designer", link: "internal://node-sonal" }
-
       ]
-
     },
-
     { 
-
       id: "22222", 
-
       name: "Team 2", 
-
       members: ["Karan", "Priya", "Amit"],
-
+      registration_date: "2026-06-12",
+      is_first_login: true,
+      first_login_timestamp: "Awaiting Session...",
       details: [
-
         { name: "Karan", role: "Developer", link: "internal://node-karan" },
-
         { name: "Priya", role: "Team Lead", link: "internal://node-priya" },
-
         { name: "Amit", role: "Designer", link: "internal://node-amit" }
-
       ]
-
     }
-
   ];
-
-
 
   let loggedSubmissionsZip = [];
 
-
-
   document.addEventListener("DOMContentLoaded", () => {
-
     setupNoCopyConstraints();
-
     refreshTeamRegistryViews();
-
     startGlobalChronometer();
-
   });
 
-
-
   function navigate(pageId) {
-
     document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-
     const targetPage = document.getElementById(`page-${pageId}`);
-
     if (targetPage) targetPage.classList.add('active');
-
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
   }
-
-
 
   function handleWorkspaceTabRouting(portalKey) {
-
     document.querySelectorAll('.switcher-tab').forEach(btn => btn.classList.remove('active'));
-
     
-
     if (portalKey === 'admin') {
-
       document.getElementById('tab-admin').classList.add('active');
-
       if (activeAdminUser) {
-
         navigate('admin-dashboard');
-
       } else {
-
         navigate('admin-auth');
-
       }
-
     } else {
-
       document.getElementById('tab-user').classList.add('active');
-
       if (authenticatedStudentTeam) {
-
         navigate('workspace-view');
-
       } else {
-
         navigate('landing');
-
       }
-
     }
-
   }
 
-
-
+  /* CRITICAL LIVE SYNC MUTATION POINT: Captures timestamp & instantly triggers UI refreshes */
   function attemptStudentLogin() {
-
     const teamNoVal = document.getElementById("studTeamNo").value.trim().toLowerCase();
-
     const eventIdVal = document.getElementById("studEventId").value.trim();
-
     const m1 = document.getElementById("studM1").value.trim().toLowerCase();
-
     const m2 = document.getElementById("studM2").value.trim().toLowerCase();
-
     const m3 = document.getElementById("studM3").value.trim().toLowerCase();
-
     const errorBox = document.getElementById("studentLoginError");
 
-
-
     if (!teamNoVal || !eventIdVal || !m1 || !m2 || !m3) {
-
       errorBox.innerText = "⚠️ Missing Fields: Please enter your team details and all 3 member names to log in.";
-
       errorBox.style.display = "block";
-
       return;
-
     }
-
-
 
     const matchedNode = systemTeams.find(t => {
-
       const matchIdentity = (t.name.toLowerCase() === teamNoVal || t.id === teamNoVal);
-
       const matchToken = (t.id === eventIdVal);
-
       const lowerRoster = t.members.map(m => m.toLowerCase().trim());
-
       const matchMembers = lowerRoster.includes(m1) && lowerRoster.includes(m2) && lowerRoster.includes(m3);
-
       return matchIdentity && matchToken && matchMembers && t.members.length === 3;
-
     });
 
-
-
     if (matchedNode) {
-
       errorBox.style.display = "none";
-
+      
+      /* First-Time State Modification */
+      if(matchedNode.is_first_login) {
+        matchedNode.is_first_login = false;
+        matchedNode.first_login_timestamp = new Date().toLocaleString();
+        
+        /* INSTANT UI REFRESH SYNCHRONIZATION POINT */
+        refreshTeamRegistryViews(); 
+      }
+      
       authenticatedStudentTeam = matchedNode;
 
-
-
       document.getElementById("activeWorkspaceTeamTag").innerText = `ACTIVE WORKSPACE: ${matchedNode.name.toUpperCase()} (#${matchedNode.id})`;
-
       document.getElementById("activeWorkspaceMembersTag").innerText = `Verified Members: ${matchedNode.members.join(' // ')}`;
-
       document.getElementById("current-user-avatar").innerText = `🚀 ${matchedNode.name.toUpperCase()}`;
 
-
-
       document.getElementById("studTeamNo").value = "";
-
       document.getElementById("studEventId").value = "";
-
       document.getElementById("studM1").value = "";
-
       document.getElementById("studM2").value = "";
-
       document.getElementById("studM3").value = "";
 
-
-
       handleWorkspaceTabRouting('user');
-
     } else {
-
       errorBox.innerText = "⚠️ Match Failed: The combination of team details, code, and member names doesn't match our list.";
-
       errorBox.style.display = "block";
-
     }
-
   }
-
-
 
   function logoutStudent() {
-
     authenticatedStudentTeam = null;
-
     document.getElementById("current-user-avatar").innerText = "👤 GUEST";
-
     refreshTeamRegistryViews();
-
     handleWorkspaceTabRouting('user');
-
   }
 
+  function renderFirstTimeAccessLedger() {
+    const tableBody = document.getElementById("firstTimeAccessTableBody");
+    const searchVal = document.getElementById("firstTimeSearchFilter").value.trim().toLowerCase();
+    const statusFilter = document.getElementById("firstTimeStatusFilter").value;
+    
+    if(!tableBody) return;
+    tableBody.innerHTML = "";
 
+    /* Sort Operation Matrix */
+    let filteredTeams = [...systemTeams].sort((a, b) => {
+      if (a.first_login_timestamp === "Awaiting Session...") return 1;
+      if (b.first_login_timestamp === "Awaiting Session...") return -1;
+      return new Date(b.first_login_timestamp) - new Date(a.first_login_timestamp);
+    });
+
+    filteredTeams = filteredTeams.filter(team => {
+      const matchesSearch = team.name.toLowerCase().includes(searchVal) || team.id.includes(searchVal);
+      const isNew = team.first_login_timestamp === "Awaiting Session...";
+      
+      let matchesStatus = true;
+      if (statusFilter === "new") matchesStatus = isNew;
+      if (statusFilter === "active") matchesStatus = !isNew;
+
+      return matchesSearch && matchesStatus;
+    });
+
+    filteredTeams.forEach(team => {
+      const isNew = team.first_login_timestamp === "Awaiting Session...";
+      const statusBadge = isNew 
+        ? `<span class="tag tag-yellow">New</span>` 
+        : `<span class="tag tag-green">Active</span>`;
+        
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td style="color:#fff; font-weight:700;">👥 ${team.name}</td>
+        <td style="font-family:'Space Mono'; font-size:12px;">ID: ${team.id}</td>
+        <td style="color:var(--text-dim);">${team.registration_date}</td>
+        <td style="font-family:'Space Mono'; color:${isNew ? 'var(--text-muted)' : 'var(--accent)'}; font-size:12px;">${team.first_login_timestamp}</td>
+        <td>${statusBadge}</td>
+      `;
+      tableBody.appendChild(tr);
+    });
+
+    if(filteredTeams.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-dim); font-family:'Space Mono';">No entries match your search criteria.</td></tr>`;
+    }
+  }
 
   function handleRegionalTeamAuthentication(event) {
-
     event.preventDefault();
-
     
-
     const teamDesignation = document.getElementById('auth-team-designation').value.trim().toLowerCase();
-
     const eventToken = document.getElementById('auth-event-token').value.trim();
-
     const errorMsg = document.getElementById('auth-error-msg');
-
     const successMsg = document.getElementById('auth-success-msg');
-
     const statusBadge = document.getElementById('auth-status-badge');
-
     const rosterCountLbl = document.getElementById('roster-count-lbl');
-
-
 
     const names = Array.from(document.querySelectorAll('#auth-roster-payload-container .roster-name')).map(el => el.value.trim().toLowerCase());
 
-
-
     errorMsg.style.display = 'none';
-
     successMsg.style.display = 'none';
 
-
-
     const cleanMatch = systemTeams.find(t => {
-
       const designationMatch = (t.name.toLowerCase() === teamDesignation || t.id === teamDesignation);
-
       const tokenMatch = (t.id === eventToken);
-
       const lowerRegistryMembers = t.members.map(m => m.toLowerCase().trim());
-
       const membersMatch = lowerRegistryMembers.includes(names[0]) && lowerRegistryMembers.includes(names[1]) && lowerRegistryMembers.includes(names[2]);
-
       return designationMatch && tokenMatch && membersMatch && t.members.length === 3;
-
     });
-
-
 
     if (cleanMatch) {
-
       statusBadge.textContent = "Team Verified";
-
       statusBadge.className = "tag tag-green";
-
       rosterCountLbl.textContent = "3 / 3 Members Found";
-
       rosterCountLbl.style.color = "var(--accent)";
-
       successMsg.innerText = "✓ Verification Success: This team is already properly set up in your records.";
-
       successMsg.style.display = "block";
-
     } else {
-
       statusBadge.textContent = "Not Found";
-
       statusBadge.className = "tag tag-red";
-
       rosterCountLbl.textContent = "Check Details Below";
-
       rosterCountLbl.style.color = "var(--red)";
-
       errorMsg.innerText = "⚠️ Verification Mismatch: These details do not match any team on your active records list.";
-
       errorMsg.style.display = 'block';
-
     }
-
   }
-
-
 
   function commitAuthPayloadToGlobalRegistry() {
-
     const teamDesignation = document.getElementById('auth-team-designation').value.trim();
-
     const eventToken = document.getElementById('auth-event-token').value.trim();
-
     const nameElements = document.querySelectorAll('#auth-roster-payload-container .member-row-card');
-
     
-
     if (!teamDesignation || eventToken.length !== 5 || isNaN(eventToken)) {
-
       alert("Halt: Please supply a proper Team Name and a clear 5-digit numeric code.");
-
       return;
-
     }
-
     if (systemTeams.some(t => t.id === eventToken)) {
-
       alert("Conflict: This code has already been taken by another team.");
-
       return;
-
     }
-
-
 
     let extractedMembers = [];
-
     let extractedDetails = [];
-
     let validationPassed = true;
 
-
-
     nameElements.forEach(card => {
-
       const name = card.querySelector('.roster-name').value.trim();
-
       const link = card.querySelector('.roster-link').value.trim() || "N/A";
-
       const role = card.querySelector('.roster-role').value;
 
-
-
       if (!name) {
-
         validationPassed = false;
-
       } else {
-
         extractedMembers.push(name);
-
         extractedDetails.push({ name, role, link });
-
       }
-
     });
-
-
 
     if (!validationPassed || extractedMembers.length !== 3) {
-
       alert("Halt: To properly save this team, you must fill out all 3 member name boxes.");
-
       return;
-
     }
 
-
-
     systemTeams.push({
-
       id: eventToken,
-
       name: teamDesignation,
-
       members: extractedMembers,
-
+      registration_date: new Date().toISOString().split('T')[0],
+      is_first_login: true,
+      first_login_timestamp: "Awaiting Session...",
       details: extractedDetails
-
     });
-
-
 
     alert(`Successfully created "${teamDesignation}" and saved their details to your directory.`);
-
     
-
     document.getElementById('auth-team-designation').value = "";
-
     document.getElementById('auth-event-token').value = "";
-
     nameElements.forEach(card => {
-
       card.querySelector('.roster-name').value = "";
-
       card.querySelector('.roster-link').value = "";
-
     });
 
-
-
     refreshTeamRegistryViews();
-
   }
 
-
-
   function attemptAdminAccess() {
-
     const userVal = document.getElementById("adminUser").value.trim().toLowerCase();
-
     const emailVal = document.getElementById("adminEmail").value.trim().toLowerCase();
-
     const errBox = document.getElementById("authError");
-
-
 
     const matchFound = verifiedSystemAdmins.find(admin => admin.user === userVal && admin.email === emailVal);
 
-
-
     if (matchFound) {
-
       errBox.style.display = "none";
-
       activeAdminUser = matchFound;
-
       document.getElementById("admin-banner-title").innerText = `Admin Session: ${matchFound.user.toUpperCase()}`;
-
       document.getElementById("current-user-avatar").innerText = `⚙️ ADMIN: ${matchFound.user.toUpperCase()}`;
-
       
-
       document.getElementById("adminUser").value = "";
-
       document.getElementById("adminEmail").value = "";
-
       handleWorkspaceTabRouting('admin');
-
     } else {
-
       errBox.style.display = "block";
-
     }
-
   }
-
-
-
-  // CHRONOMETER ENGINE
 
   function startGlobalChronometer() {
-
     if(currentTimerInterval) clearInterval(currentTimerInterval);
-
     currentTimerInterval = setInterval(() => {
-
       if (timeInSeconds > 0) {
-
         timeInSeconds--;
-
         renderChronometerDisplays();
-
       }
-
     }, 1000);
-
   }
-
-
 
   function adjustGlobalTime(minutesOffset) {
-
     timeInSeconds = Math.max(0, timeInSeconds + (minutesOffset * 60));
-
     renderChronometerDisplays();
-
   }
-
-
 
   function renderChronometerDisplays() {
-
     const hrs = Math.floor(timeInSeconds / 3600);
-
     const mins = Math.floor((timeInSeconds % 3600) / 60);
-
     const secs = timeInSeconds % 60;
 
-
-
     const formatted = `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-
     document.getElementById("adminClockDisplay").innerText = formatted;
-
     document.getElementById("workspaceClockDisplay").innerText = formatted;
-
   }
-
-
 
   function triggerAutoTokenGen() {
-
     document.getElementById("newEventId").value = Math.floor(10000 + Math.random() * 90000);
-
   }
-
-
 
   function refreshTeamRegistryViews() {
-
     const registryLog = document.getElementById("registeredTeamsLog");
-
     const adminSelector = document.getElementById("targetTeamSelector");
-
     const helpLookup = document.getElementById("studentHelpLookupList");
-
     const ledgerTableBody = document.getElementById("memberLedgerTableBody");
-
     
-
     if(!registryLog || !adminSelector || !helpLookup || !ledgerTableBody) return;
 
-
-
     registryLog.innerHTML = "";
-
     adminSelector.innerHTML = "";
-
     helpLookup.innerHTML = "";
-
     ledgerTableBody.innerHTML = "";
 
-
-
     let totalHackers = 0;
-
     let readyTeamsCount = 0;
-
     let pendingTeamsCount = 0;
-
-
+    let totalFirstLogins = 0;
 
     systemTeams.forEach((team, index) => {
-
       totalHackers += team.members.length;
-
       if (team.members.length === 3) readyTeamsCount++;
-
       else pendingTeamsCount++;
-
-
+      if (team.first_login_timestamp !== "Awaiting Session...") totalFirstLogins++;
 
       const row = document.createElement("div");
-
       row.classList.add("data-item");
 
-
-
       let pills = "";
-
       team.members.forEach((m, mIdx) => {
-
         pills += `<div class="member-pill">${m} <span onclick="removeMemberNode(${index}, ${mIdx})">×</span></div>`;
-
       });
 
-
-
       const memberStatusLabel = team.members.length === 3 
-
         ? `<span style="color:var(--accent); font-size:11px; font-family:'Space Mono';">[ FULL TEAM SLOT ]</span>`
-
         : `<span style="color:var(--yellow); font-size:11px; font-family:'Space Mono';">[ NEED MEMBERS: ${team.members.length}/3 ]</span>`;
 
-
-
       row.innerHTML = `
-
         <div style="flex:1;">
-
           <div style="display:flex; align-items:center; gap:12px;">
-
             <strong style="color:#fff; font-size:14px; font-family:'Space Grotesk'; font-weight:700;">${team.name}</strong>
-
             <span style="font-family:'Space Mono'; font-size:11px; color: var(--accent); background:#000; padding:2px 8px; border:1px solid #222;">Access Code: ${team.id}</span>
-
             ${memberStatusLabel}
-
           </div>
-
           <div class="member-pills">${pills || '<span class="text-muted" style="font-size:11px; font-family:\'Space Mono\';">No participant names added to this team yet.</span>'}</div>
-
         </div>
-
         <button style="color:var(--red); border:none; background:none; cursor:pointer; font-weight:700; font-family:'Space Mono'; font-size:11px; text-transform:uppercase;" onclick="removeTeamNode(${index})">Delete Team</button>
-
       `;
-
       registryLog.appendChild(row);
 
-
-
       const opt = document.createElement("option");
-
       opt.value = index;
-
       opt.innerText = `${team.name} (Code: ${team.id})`;
-
       adminSelector.appendChild(opt);
 
-
-
       const helpBlock = document.createElement("div");
-
       helpBlock.style.fontSize = "12px";
-
       helpBlock.style.borderBottom = "1px dashed #1c1c1c";
-
       helpBlock.style.paddingBottom = "6px";
-
       helpBlock.innerHTML = `• <strong>${team.name}</strong> [Code: <span style="color:var(--accent);">${team.id}</span>] <br> <span style="color:#666; padding-left:10px; font-family:'Space Mono'; font-size:11px;">↳ Active Roster: ${team.members.join(', ') || 'No names added yet.'}</span>`;
-
       helpLookup.appendChild(helpBlock);
 
-
-
       if (team.details && team.details.length > 0) {
-
         team.details.forEach(detail => {
-
           const tableRow = document.createElement("tr");
-
           tableRow.innerHTML = `
-
             <td style="color:#fff; font-weight:700;">👤 ${detail.name}</td>
-
             <td><span class="tag ${detail.role === 'Team Lead' ? 'tag-green' : detail.role === 'Developer' ? 'tag-blue' : 'tag-red'}">${detail.role}</span></td>
-
             <td style="font-family:'Space Mono'; font-size:12px;">${team.name}</td>
-
             <td style="font-family:'Space Mono'; color:var(--accent); font-size:12px;">${team.id}</td>
-
             <td style="font-family:'Space Mono'; font-size:11px; color:var(--text-muted);">${detail.link}</td>
-
           `;
-
           ledgerTableBody.appendChild(tableRow);
-
         });
-
       } else {
-
         team.members.forEach((m, idx) => {
-
           const tableRow = document.createElement("tr");
-
           let inferredRole = idx === 0 ? "Team Lead" : idx === 1 ? "Developer" : "Designer";
-
           tableRow.innerHTML = `
-
             <td style="color:#fff; font-weight:700;">👤 ${m}</td>
-
             <td><span class="tag ${inferredRole === 'Team Lead' ? 'tag-green' : inferredRole === 'Developer' ? 'tag-blue' : 'tag-red'}">${inferredRole}</span></td>
-
             <td style="font-family:'Space Mono'; font-size:12px;">${team.name}</td>
-
             <td style="font-family:'Space Mono'; color:var(--accent); font-size:12px;">${team.id}</td>
-
             <td style="font-family:'Space Mono'; font-size:11px; color:var(--text-muted);">Internal Record</td>
-
           `;
-
           ledgerTableBody.appendChild(tableRow);
-
         });
-
       }
-
     });
 
-
-
     document.getElementById("statTotalTeams").innerText = systemTeams.length;
-
     document.getElementById("statTotalHackers").innerText = totalHackers;
-
     document.getElementById("statReadyTeams").innerText = readyTeamsCount;
-
     document.getElementById("statPendingTeams").innerText = pendingTeamsCount;
-
+    document.getElementById("statFirstLogins").innerText = totalFirstLogins;
     document.getElementById("ledger-count-badge").innerText = `${totalHackers} Total Profiles`;
 
-
-
     if(systemTeams.length === 0) {
-
       helpLookup.innerText = "No teams created yet. Log into the admin portal to add fresh slots.";
-
       ledgerTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:32px; color:var(--text-muted); font-family:'Space Mono';">The participant directory is completely empty.</td></tr>`;
-
     }
 
+    renderFirstTimeAccessLedger();
   }
-
-
 
   function commitTeamToRegistry() {
-
     const nameInput = document.getElementById("newTeamName");
-
     const idInput = document.getElementById("newEventId");
-
     const name = nameInput.value.trim();
-
     const id = idInput.value.trim();
 
-
-
     if(!name || id.length !== 5 || isNaN(id)) {
-
       alert("Error: Please provide a valid team name and use a full 5-digit number for the code.");
-
       return;
-
     }
-
     if(systemTeams.some(t => t.id === id)) {
-
       alert("Error: This 5-digit team code is already in use.");
-
       return;
-
     }
 
-
-
-    systemTeams.push({ id: id, name: name, members: [], details: [] });
-
+    systemTeams.push({ 
+      id: id, 
+      name: name, 
+      members: [], 
+      registration_date: new Date().toISOString().split('T')[0],
+      is_first_login: true,
+      first_login_timestamp: "Awaiting Session...",
+      details: [] 
+    });
     nameInput.value = ""; idInput.value = "";
-
     refreshTeamRegistryViews();
-
   }
 
-
-
   function commitMemberToTeam() {
-
     const select = document.getElementById("targetTeamSelector");
-
     const input = document.getElementById("newMemberName");
-
     const name = input.value.trim();
-
-
 
     if(select.options.length === 0 || !name) return;
 
-
-
     const team = systemTeams[parseInt(select.value)];
-
     if(team.members.length >= 3) {
-
       alert("Error: This team slot is full. Teams are limited to a maximum of 3 members.");
-
       return;
-
     }
-
-
 
     let assignedRole = team.members.length === 0 ? "Team Lead" : team.members.length === 1 ? "Developer" : "Designer";
-
     team.members.push(name);
-
     
-
     if(!team.details) team.details = [];
-
     team.details.push({ name: name, role: assignedRole, link: "Added via Admin Panel" });
-
     
-
     input.value = "";
-
     refreshTeamRegistryViews();
-
   }
-
-
 
   function removeTeamNode(i) { systemTeams.splice(i, 1); refreshTeamRegistryViews(); }
-
   function removeMemberNode(ti, mi) { 
-
     systemTeams[ti].members.splice(mi, 1); 
-
     if(systemTeams[ti].details) systemTeams[ti].details.splice(mi, 1);
-
     refreshTeamRegistryViews(); 
-
   }
-
-
 
   function logoutAdmin() {
-
     activeAdminUser = null;
-
     document.getElementById("current-user-avatar").innerText = "👤 GUEST";
-
     refreshTeamRegistryViews();
-
     handleWorkspaceTabRouting('user');
-
   }
-
-
 
   function toggleProblemRelease() {
-
     const promptText = document.getElementById("challengeInput").value.trim();
-
     const banner = document.getElementById("hackerProblemBanner");
-
     const display = document.getElementById("broadcastMessageText");
-
     const btn = document.getElementById("broadcastBtn");
 
-
-
     isProblemRevealed = !isProblemRevealed;
-
     if(isProblemRevealed) {
-
       display.innerText = promptText;
-
       banner.classList.add("active");
-
       btn.innerText = "Hide Broadcasted Statement";
-
       btn.style.backgroundColor = "var(--red)";
-
       btn.style.color = "#fff";
-
     } else {
-
       banner.classList.remove("active");
-
       btn.innerText = "Send Problem Statement to Workspace";
-
       btn.style.backgroundColor = "var(--accent)";
-
       btn.style.color = "#000";
-
     }
-
   }
-
-
 
   function setupNoCopyConstraints() {
-
     document.querySelectorAll('.code-area').forEach(ta => {
-
       ta.addEventListener('contextmenu', e => e.preventDefault());
-
       ta.addEventListener('keydown', e => {
-
         if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'x'].includes(e.key.toLowerCase())) e.preventDefault();
-
       });
-
     });
-
   }
-
-
 
   function triggerPermanentSubmitDialog() { document.getElementById("confirmSubmitDialog").classList.add("active"); }
-
   function dismissSubmitDialog() { document.getElementById("confirmSubmitDialog").classList.remove("active"); }
 
-
-
   function executeFinalPublishChain() {
-
     dismissSubmitDialog();
-
     const htmlSrc = document.getElementById("editorIndex").value;
-
     const cssSrc = document.getElementById("editorStyle").value;
-
     const tName = authenticatedStudentTeam ? authenticatedStudentTeam.name : "Unknown_Team";
-
     const tId = authenticatedStudentTeam ? authenticatedStudentTeam.id : "00000";
 
-
-
     loggedSubmissionsZip.push({
-
       fileName: `${tName.replace(/\s+/g, '_')}_ID_${tId}_Build.zip`,
-
       time: new Date().toLocaleTimeString(),
-
       htmlLength: htmlSrc.length, cssLength: cssSrc.length
-
     });
-
-
 
     renderAdminZipRepository();
-
     navigate('thank-you');
-
   }
-
-
 
   function renderAdminZipRepository() {
-
     const container = document.getElementById("adminZipRepository");
-
     if(!container) return;
-
     container.innerHTML = "";
-
     if(loggedSubmissionsZip.length === 0) {
-
       container.innerHTML = `<div class="text-muted" style="text-align: center; padding: 48px; font-family:'Space Mono'; font-size:12px; color:var(--text-muted);">Awaiting team design solutions to be uploaded from student work areas...</div>`;
-
       return;
-
     }
-
     loggedSubmissionsZip.forEach(archive => {
-
       const element = document.createElement("div");
-
       element.classList.add("zip-item");
-
       element.innerHTML = `
-
         <div>
-
           <span style="color: var(--accent); font-weight:700;">📦 ${archive.fileName}</span>
-
           <div style="font-size:11px; color: var(--text-dim); margin-top:2px; font-family:'Space Mono';">Solution file bundle uploaded successfully at ${archive.time}</div>
-
         </div>
-
         <button class="btn-accent-sm" onclick="alert('Downloading team design project files...')">Download Project ZIP</button>
-
       `;
-
       container.appendChild(element);
-
     });
-
   }
-
 </script>
-
 </body>
-
 </html>
