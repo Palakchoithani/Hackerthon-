@@ -126,6 +126,7 @@
     max-width: 1240px; margin: 0 auto; padding: 24px 32px;
     display: grid; grid-template-columns: 1.15fr 1fr; gap: 48px; position: relative;
     height: 100%; max-height: calc(100vh - var(--nav-h));
+    align-items: center;
   }
   @media(max-width: 950px) { 
     #page-landing { overflow-y: auto; }
@@ -134,7 +135,7 @@
 
   .brand-manifesto-panel { 
     display: flex; flex-direction: column; justify-content: flex-start; 
-    height: 100%; overflow-y: auto; padding-right: 12px;
+    max-height: 100%; overflow-y: auto; padding-right: 12px;
   }
   
   .brand-manifesto-panel::-webkit-scrollbar, .inner-scroll-card::-webkit-scrollbar { width: 6px; }
@@ -310,13 +311,6 @@
       <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 14px; max-width: 480px; line-height: 1.65;">
         A 4-day design challenge to solve real-world problems through research, empathy, and creative design thinking.
       </p>
-      
-      <div style="background: #000; border: 2px solid var(--border-dark); padding: 20px; position: relative; box-shadow: 4px 4px 0 #0d0d0d;">
-        <div class="blueprint-frame frame-tl"></div>
-        <div class="tape-label" style="background: var(--accent); color:#000; font-size: 10px; margin-bottom:12px; transform:rotate(-0.5deg);">CURRENT TEAMS REGISTERED</div>
-        <div id="studentHelpLookupList" style="font-size: 12px; font-family: 'Space Mono'; color: var(--text-dim); max-height: 110px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-        </div>
-      </div>
 
       <div class="journey-timeline-card">
         <div class="tape-label" style="margin-bottom:16px;">4-DAY JOURNEY PROGRAM</div>
@@ -591,7 +585,9 @@
       <div class="control-group">
         <textarea id="challengeInput" class="input-field mono" rows="2" style="resize:none; background:#000; border-color:#2c2c2c;">Design and build a high-performance, visual workspace dashboard that keeps teams focused and protects custom design code entries from unwanted copying.</textarea>
       </div>
-      <button class="form-submit" id="broadcastBtn" style="margin: 0;" onclick="toggleProblemRelease()">Send Problem Statement to Workspace</button>
+      <div style="display:grid; grid-template-columns: 1fr; gap:16px;">
+        <button class="form-submit" id="broadcastBtn" style="margin: 0;" onclick="toggleProblemRelease()">Send Problem Statement to Workspace</button>
+      </div>
     </div>
 
     <div class="span-full brutalist-card">
@@ -739,7 +735,6 @@
     { user: 'palak', email: 'palak@gmail.com' }
   ];
 
-  /* Core Database with Enriched State Profiles */
   let systemTeams = [
     { 
       id: "11111", 
@@ -804,10 +799,10 @@
     }
   }
 
-  /* CRITICAL LIVE SYNC MUTATION POINT: Captures timestamp & instantly triggers UI refreshes */
+  /* CRITICAL CASE-INSENSITIVE NORMALIZATION UPGRADES */
   function attemptStudentLogin() {
     const teamNoVal = document.getElementById("studTeamNo").value.trim().toLowerCase();
-    const eventIdVal = document.getElementById("studEventId").value.trim();
+    const eventIdVal = document.getElementById("studEventId").value.trim().toLowerCase();
     const m1 = document.getElementById("studM1").value.trim().toLowerCase();
     const m2 = document.getElementById("studM2").value.trim().toLowerCase();
     const m3 = document.getElementById("studM3").value.trim().toLowerCase();
@@ -820,8 +815,8 @@
     }
 
     const matchedNode = systemTeams.find(t => {
-      const matchIdentity = (t.name.toLowerCase() === teamNoVal || t.id === teamNoVal);
-      const matchToken = (t.id === eventIdVal);
+      const matchIdentity = (t.name.toLowerCase() === teamNoVal || t.id.toLowerCase() === teamNoVal);
+      const matchToken = (t.id.toLowerCase() === eventIdVal);
       const lowerRoster = t.members.map(m => m.toLowerCase().trim());
       const matchMembers = lowerRoster.includes(m1) && lowerRoster.includes(m2) && lowerRoster.includes(m3);
       return matchIdentity && matchToken && matchMembers && t.members.length === 3;
@@ -830,12 +825,9 @@
     if (matchedNode) {
       errorBox.style.display = "none";
       
-      /* First-Time State Modification */
       if(matchedNode.is_first_login) {
         matchedNode.is_first_login = false;
         matchedNode.first_login_timestamp = new Date().toLocaleString();
-        
-        /* INSTANT UI REFRESH SYNCHRONIZATION POINT */
         refreshTeamRegistryViews(); 
       }
       
@@ -873,7 +865,6 @@
     if(!tableBody) return;
     tableBody.innerHTML = "";
 
-    /* Sort Operation Matrix */
     let filteredTeams = [...systemTeams].sort((a, b) => {
       if (a.first_login_timestamp === "Awaiting Session...") return 1;
       if (b.first_login_timestamp === "Awaiting Session...") return -1;
@@ -881,7 +872,7 @@
     });
 
     filteredTeams = filteredTeams.filter(team => {
-      const matchesSearch = team.name.toLowerCase().includes(searchVal) || team.id.includes(searchVal);
+      const matchesSearch = team.name.toLowerCase().includes(searchVal) || team.id.toLowerCase().includes(searchVal);
       const isNew = team.first_login_timestamp === "Awaiting Session...";
       
       let matchesStatus = true;
@@ -917,7 +908,7 @@
     event.preventDefault();
     
     const teamDesignation = document.getElementById('auth-team-designation').value.trim().toLowerCase();
-    const eventToken = document.getElementById('auth-event-token').value.trim();
+    const eventToken = document.getElementById('auth-event-token').value.trim().toLowerCase();
     const errorMsg = document.getElementById('auth-error-msg');
     const successMsg = document.getElementById('auth-success-msg');
     const statusBadge = document.getElementById('auth-status-badge');
@@ -929,8 +920,8 @@
     successMsg.style.display = 'none';
 
     const cleanMatch = systemTeams.find(t => {
-      const designationMatch = (t.name.toLowerCase() === teamDesignation || t.id === teamDesignation);
-      const tokenMatch = (t.id === eventToken);
+      const designationMatch = (t.name.toLowerCase() === teamDesignation || t.id.toLowerCase() === teamDesignation);
+      const tokenMatch = (t.id.toLowerCase() === eventToken);
       const lowerRegistryMembers = t.members.map(m => m.toLowerCase().trim());
       const membersMatch = lowerRegistryMembers.includes(names[0]) && lowerRegistryMembers.includes(names[1]) && lowerRegistryMembers.includes(names[2]);
       return designationMatch && tokenMatch && membersMatch && t.members.length === 3;
@@ -962,8 +953,10 @@
       alert("Halt: Please supply a proper Team Name and a clear 5-digit numeric code.");
       return;
     }
-    if (systemTeams.some(t => t.id === eventToken)) {
-      alert("Conflict: This code has already been taken by another team.");
+    
+    /* Case-Insensitive Duplicate Verification Filter Check */
+    if (systemTeams.some(t => t.id.toLowerCase() === eventToken.toLowerCase() || t.name.toLowerCase() === teamDesignation.toLowerCase())) {
+      alert("Conflict: This team name or code has already been taken.");
       return;
     }
 
@@ -1016,7 +1009,7 @@
     const emailVal = document.getElementById("adminEmail").value.trim().toLowerCase();
     const errBox = document.getElementById("authError");
 
-    const matchFound = verifiedSystemAdmins.find(admin => admin.user === userVal && admin.email === emailVal);
+    const matchFound = verifiedSystemAdmins.find(admin => admin.user.toLowerCase() === userVal && admin.email.toLowerCase() === emailVal);
 
     if (matchFound) {
       errBox.style.display = "none";
@@ -1064,14 +1057,12 @@
   function refreshTeamRegistryViews() {
     const registryLog = document.getElementById("registeredTeamsLog");
     const adminSelector = document.getElementById("targetTeamSelector");
-    const helpLookup = document.getElementById("studentHelpLookupList");
     const ledgerTableBody = document.getElementById("memberLedgerTableBody");
     
-    if(!registryLog || !adminSelector || !helpLookup || !ledgerTableBody) return;
+    if(!registryLog || !adminSelector || !ledgerTableBody) return;
 
     registryLog.innerHTML = "";
     adminSelector.innerHTML = "";
-    helpLookup.innerHTML = "";
     ledgerTableBody.innerHTML = "";
 
     let totalHackers = 0;
@@ -1115,13 +1106,6 @@
       opt.innerText = `${team.name} (Code: ${team.id})`;
       adminSelector.appendChild(opt);
 
-      const helpBlock = document.createElement("div");
-      helpBlock.style.fontSize = "12px";
-      helpBlock.style.borderBottom = "1px dashed #1c1c1c";
-      helpBlock.style.paddingBottom = "6px";
-      helpBlock.innerHTML = `• <strong>${team.name}</strong> [Code: <span style="color:var(--accent);">${team.id}</span>] <br> <span style="color:#666; padding-left:10px; font-family:'Space Mono'; font-size:11px;">↳ Active Roster: ${team.members.join(', ') || 'No names added yet.'}</span>`;
-      helpLookup.appendChild(helpBlock);
-
       if (team.details && team.details.length > 0) {
         team.details.forEach(detail => {
           const tableRow = document.createElement("tr");
@@ -1158,7 +1142,6 @@
     document.getElementById("ledger-count-badge").innerText = `${totalHackers} Total Profiles`;
 
     if(systemTeams.length === 0) {
-      helpLookup.innerText = "No teams created yet. Log into the admin portal to add fresh slots.";
       ledgerTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:32px; color:var(--text-muted); font-family:'Space Mono';">The participant directory is completely empty.</td></tr>`;
     }
 
@@ -1175,8 +1158,8 @@
       alert("Error: Please provide a valid team name and use a full 5-digit number for the code.");
       return;
     }
-    if(systemTeams.some(t => t.id === id)) {
-      alert("Error: This 5-digit team code is already in use.");
+    if (systemTeams.some(t => t.id.toLowerCase() === id.toLowerCase() || t.name.toLowerCase() === name.toLowerCase())) {
+      alert("Error: This team name or code is already taken.");
       return;
     }
 
