@@ -462,28 +462,46 @@
 
         <!-- IMPORT -->
         <div class="excel-action-block">
-          <div class="excel-action-title">📥 Import — Excel → Admin</div>
-          <div class="excel-action-desc">Upload a previously exported (or manually edited) Excel file to sync all changes back into the admin panel. Follows the same sheet structure.</div>
+          <div class="excel-action-title">📥 Import Roster — Auto Event ID</div>
+          <div class="excel-action-desc">Upload <strong style="color:#4caf70;">any simple roster sheet</strong>. The system reads team names and member names, then <strong style="color:var(--accent);">auto-generates a unique 5-digit event ID</strong> for each team. No specific format required.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <button class="btn-excel btn-excel-import" onclick="downloadRosterTemplate()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download Template
+            </button>
+          </div>
           <div class="drop-zone" id="excelDropZone">
             <input type="file" id="excelFileInput" accept=".xlsx,.xls" onchange="handleExcelImport(event)">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <div>Drop .xlsx here or <span style="color:var(--accent);">click to browse</span></div>
-            <div style="font-size:10px;color:#2a5e38;margin-top:4px;">Accepts: designverse_hackathon_data.xlsx</div>
+            <div>Drop roster .xlsx here or <span style="color:var(--accent);">click to browse</span></div>
+            <div style="font-size:10px;color:#2a5e38;margin-top:4px;">Any format accepted — just needs Team_Name + Member columns</div>
           </div>
         </div>
       </div>
 
-      <!-- Excel structure legend -->
+      <!-- Import Preview Panel -->
+      <div id="importPreviewPanel" style="display:none;margin-top:20px;border:2px solid var(--accent);background:#090e04;padding:20px;">
+        <div style="font-family:'Space Mono';font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;">
+          ✦ Import Preview — Review Before Saving
+        </div>
+        <div id="importPreviewTable" style="overflow-x:auto;max-height:280px;overflow-y:auto;"></div>
+        <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
+          <button class="form-submit" data-hover="CONFIRM &amp; SAVE ALL TEAMS" style="margin:0;padding:14px 28px;width:auto;" onclick="confirmImport()">✓ Confirm &amp; Save Teams</button>
+          <button class="btn-action" onclick="cancelImport()">✕ Cancel</button>
+          <span id="importPreviewCount" style="font-family:'Space Mono';font-size:11px;color:var(--text-dim);display:flex;align-items:center;"></span>
+        </div>
+      </div>
+
+      <!-- Format guide -->
       <div style="margin-top:16px;border-top:1px solid #1d3a20;padding-top:16px;">
         <div class="sheet-tab-row">
-          <div class="sheet-tab active">Sheet 1 — Teams</div>
-          <div class="sheet-tab">Sheet 2 — Members</div>
-          <div class="sheet-tab">Sheet 3 — Event Codes</div>
+          <div class="sheet-tab active">Simple Roster (Recommended)</div>
+          <div class="sheet-tab">Full Export Format</div>
         </div>
-        <div style="background:#040a06;border:1px solid #1d3a20;border-top:none;padding:14px 16px;font-family:'Space Mono';font-size:10px;color:#2a5e38;">
-          <strong style="color:#4caf70;">Teams:</strong> Team_Name | Team_ID | Registration_Date | Member_Count | First_Login_Status | First_Login_Timestamp &nbsp;|&nbsp;
-          <strong style="color:#4caf70;">Members:</strong> Member_Name | Role | Team_Name | Team_ID | Profile_Link &nbsp;|&nbsp;
-          <strong style="color:#4caf70;">Event_Codes:</strong> Team_Name | Event_Code | Code_Created_Date | Status
+        <div style="background:#040a06;border:1px solid #1d3a20;border-top:none;padding:14px 16px;font-family:'Space Mono';font-size:10px;color:#2a5e38;line-height:1.8;">
+          <strong style="color:#4caf70;">Simple Roster columns (any order):</strong> Team_Name | Member_1 | Member_2 | Member_3 | Member_4 | Member_5<br>
+          <span style="color:#1d6f42;">OR separate rows per member:</span> Team_Name | Member_Name | Role (optional)<br>
+          <strong style="color:var(--accent);">5-Digit Event ID is auto-generated for each team automatically.</strong>
         </div>
       </div>
 
@@ -980,113 +998,215 @@ function styleExcelHeader(ws, colCount) {
 }
 
 /* ══════════════════════════════════════════════
-   EXCEL IMPORT — .xlsx upload → Admin panel sync
+   SMART EXCEL IMPORT — Auto Event ID Generator
+   Accepts ANY roster format, detects columns automatically
 ══════════════════════════════════════════════ */
+
+let _pendingImport = []; // holds parsed teams awaiting admin confirmation
+
+/* Generate a unique 5-digit numeric ID not already in systemTeams */
+function generateUniqueEventId() {
+  const used = new Set(systemTeams.map(t => t.id));
+  let id;
+  do { id = String(Math.floor(10000 + Math.random() * 90000)); } while (used.has(id));
+  used.add(id); // reserve it immediately for subsequent calls in same batch
+  return id;
+}
+
+/* Download a clean blank roster template */
+function downloadRosterTemplate() {
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['Team_Name', 'Member_1', 'Member_2', 'Member_3', 'Member_4', 'Member_5'],
+    ['Team Alpha', 'Aman Sharma', 'Priya Verma', 'Rohit Jain', '', ''],
+    ['Team Beta',  'Sneha Patel', 'Karan Mehta', 'Ankur Das', 'Neha Gupta', ''],
+  ]);
+  ws['!cols'] = [{wch:18},{wch:20},{wch:20},{wch:20},{wch:20},{wch:20}];
+  styleExcelHeader(ws, 6);
+  XLSX.utils.book_append_sheet(wb, ws, 'Roster');
+  XLSX.writeFile(wb, 'designverse_roster_template.xlsx');
+  excelLog('Roster template downloaded.', 'ok');
+}
+
 function handleExcelImport(event) {
   const file = event.target.files[0];
   if (!file) return;
   if (!file.name.match(/\.(xlsx|xls)$/i)) {
-    excelLog('Import rejected: file must be .xlsx or .xls', 'err');
+    excelLog('Import rejected: must be .xlsx or .xls', 'err');
     showSyncToast('✗ Invalid file — use .xlsx format', 'var(--red)');
     return;
   }
-
-  excelLog(`Reading file: ${file.name} (${(file.size / 1024).toFixed(1)} KB)…`, 'info');
-  setExcelStatus('Reading Excel file…', true);
+  excelLog(`Reading: ${file.name} (${(file.size/1024).toFixed(1)} KB)…`, 'info');
+  setExcelStatus('Parsing roster file…', true);
 
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
-      const data = new Uint8Array(e.target.result);
-      const wb = XLSX.read(data, { type: 'array' });
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+      const sheetName = wb.SheetNames[0];
+      excelLog(`Sheet detected: "${sheetName}"`, 'info');
 
-      const sheetNames = wb.SheetNames;
-      excelLog(`Workbook loaded — sheets found: ${sheetNames.join(', ')}`, 'info');
-
-      // Find required sheets (case-insensitive)
-      const findSheet = (keyword) => {
-        const name = sheetNames.find(n => n.toLowerCase().includes(keyword.toLowerCase()));
-        return name ? XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: '' }) : null;
-      };
-
-      const teamsRows  = findSheet('team');
-      const membersRows = findSheet('member');
-
-      if (!teamsRows) {
-        excelLog('Import aborted: "Teams" sheet not found in workbook.', 'err');
-        showSyncToast('✗ Import failed: Teams sheet missing', 'var(--red)');
+      const raw = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '', header: 1 });
+      if (!raw.length) {
+        excelLog('File is empty.', 'err');
+        showSyncToast('✗ Empty file', 'var(--red)');
         return;
       }
 
-      /* Build new systemTeams from Teams sheet */
-      const importedTeams = [];
-      teamsRows.forEach(row => {
-        const name = (row['Team_Name'] || '').toString().trim();
-        const id   = (row['Team_ID']   || '').toString().trim();
-        if (!name || !id) return;
+      /* ── Detect format ── */
+      const headers = raw[0].map(h => String(h).trim().toLowerCase());
+      const hasTeamCol    = headers.some(h => h.includes('team'));
+      const hasMemberCol  = headers.some(h => h.includes('member') || h.includes('name'));
+      const hasSeparateRows = headers.some(h => h.includes('member_name') || h === 'name');
 
-        const regDate = (row['Registration_Date'] || new Date().toISOString().split('T')[0]).toString().trim();
-        const maxSz   = parseInt(row['Max_Size']) || 3;
-        const loginTs = (row['First_Login_Timestamp'] || 'Awaiting Session...').toString().trim();
-        const isNew   = loginTs === 'Awaiting Session...' || (row['First_Login_Status'] || '').toString().includes('Not');
+      let parsed = [];
 
-        importedTeams.push({
-          id, name,
-          members: [],
-          details: [],
-          registration_date: regDate,
-          maxSize: maxSz,
-          is_first_login: isNew,
-          first_login_timestamp: loginTs
+      if (hasSeparateRows) {
+        /* FORMAT A: One row per member — Team_Name | Member_Name | Role */
+        const teamIdx   = headers.findIndex(h => h.includes('team'));
+        const memberIdx = headers.findIndex(h => h.includes('member_name') || h === 'name' || (h.includes('member') && !h.match(/\d/)));
+        const roleIdx   = headers.findIndex(h => h.includes('role'));
+
+        const teamMap = {};
+        raw.slice(1).forEach(row => {
+          const tName = String(row[teamIdx] || '').trim();
+          const mName = String(row[memberIdx] || '').trim();
+          if (!tName || !mName) return;
+          if (!teamMap[tName]) teamMap[tName] = { name: tName, members: [], details: [] };
+          const role = roleIdx >= 0 ? String(row[roleIdx] || '').trim() || ROLES[teamMap[tName].members.length % ROLES.length] : ROLES[teamMap[tName].members.length % ROLES.length];
+          teamMap[tName].members.push(mName);
+          teamMap[tName].details.push({ name: mName, role, link: 'N/A' });
         });
+        parsed = Object.values(teamMap);
+
+      } else if (hasTeamCol) {
+        /* FORMAT B: One row per team — Team_Name | Member_1 | Member_2 | ... */
+        const teamIdx = headers.findIndex(h => h.includes('team'));
+        const memberCols = headers.reduce((acc, h, i) => {
+          if (i !== teamIdx && (h.includes('member') || h.includes('name') || h === '')) acc.push(i);
+          return acc;
+        }, []);
+
+        raw.slice(1).forEach(row => {
+          const tName = String(row[teamIdx] || '').trim();
+          if (!tName) return;
+          const members = memberCols
+            .map(ci => String(row[ci] || '').trim())
+            .filter(Boolean);
+          if (!members.length) return;
+          parsed.push({
+            name: tName,
+            members,
+            details: members.map((m, i) => ({ name: m, role: ROLES[i % ROLES.length], link: 'N/A' }))
+          });
+        });
+
+      } else {
+        /* FORMAT C: Fallback — treat col 0 as team, rest as members */
+        excelLog('No recognised headers. Treating column 1 as Team, rest as Members.', 'info');
+        raw.slice(1).forEach(row => {
+          const tName = String(row[0] || '').trim();
+          if (!tName) return;
+          const members = row.slice(1).map(c => String(c || '').trim()).filter(Boolean);
+          if (!members.length) return;
+          parsed.push({
+            name: tName,
+            members,
+            details: members.map((m, i) => ({ name: m, role: ROLES[i % ROLES.length], link: 'N/A' }))
+          });
+        });
+      }
+
+      if (!parsed.length) {
+        excelLog('No valid teams found. Check your file has Team Name + Member columns.', 'err');
+        showSyncToast('✗ No teams detected — check format', 'var(--red)');
+        return;
+      }
+
+      /* ── Assign auto Event IDs ── */
+      const usedIds = new Set(systemTeams.map(t => t.id));
+      parsed = parsed.map(t => {
+        // Keep existing ID if team name already registered
+        const existing = systemTeams.find(st => st.name.toLowerCase() === t.name.toLowerCase());
+        let id;
+        if (existing) {
+          id = existing.id;
+        } else {
+          do { id = String(Math.floor(10000 + Math.random() * 90000)); } while (usedIds.has(id));
+          usedIds.add(id);
+        }
+        return {
+          ...t,
+          id,
+          registration_date: new Date().toISOString().split('T')[0],
+          maxSize: t.members.length,
+          is_first_login: true,
+          first_login_timestamp: 'Awaiting Session...'
+        };
       });
 
-      /* Fill member info from Members sheet */
-      if (membersRows) {
-        membersRows.forEach(row => {
-          const memberName = (row['Member_Name'] || '').toString().trim();
-          const role       = (row['Role']        || 'Member').toString().trim();
-          const teamId     = (row['Team_ID']     || '').toString().trim();
-          const link       = (row['Profile_Link'] || 'N/A').toString().trim();
-          if (!memberName || !teamId) return;
-
-          const team = importedTeams.find(t => t.id === teamId);
-          if (team) {
-            team.members.push(memberName);
-            team.details.push({ name: memberName, role, link });
-          }
-        });
-      }
-
-      if (!importedTeams.length) {
-        excelLog('Import warning: No valid team rows found in Teams sheet.', 'err');
-        showSyncToast('✗ No valid teams found in file', 'var(--red)');
-        return;
-      }
-
-      /* Merge strategy: replace by ID, keep un-matched existing teams */
-      const importedIds = new Set(importedTeams.map(t => t.id));
-      const retained = systemTeams.filter(t => !importedIds.has(t.id));
-      systemTeams = [...retained, ...importedTeams];
-
-      /* Refresh UI */
-      refreshTeamRegistryViews();
-
-      const totalMembers = importedTeams.reduce((s, t) => s + t.members.length, 0);
-      excelLog(`Import complete — ${importedTeams.length} teams synced, ${totalMembers} members loaded.`, 'ok');
-      setExcelStatus(`Last import: ${new Date().toLocaleTimeString()} — ${importedTeams.length} teams synced`, true);
-      showSyncToast(`✓ Synced ${importedTeams.length} teams, ${totalMembers} members from Excel`);
-
-      // Reset file input
+      _pendingImport = parsed;
+      showImportPreview(parsed);
+      excelLog(`Preview ready — ${parsed.length} teams, ${parsed.reduce((s,t)=>s+t.members.length,0)} members. Confirm to save.`, 'info');
       event.target.value = '';
 
     } catch (err) {
-      excelLog('Import parse error: ' + err.message, 'err');
-      setExcelStatus('Import failed — invalid file format', false);
+      excelLog('Parse error: ' + err.message, 'err');
+      setExcelStatus('Import failed — invalid file', false);
       showSyncToast('✗ Parse error: ' + err.message, 'var(--red)');
     }
   };
   reader.readAsArrayBuffer(file);
+}
+
+function showImportPreview(teams) {
+  const panel = document.getElementById('importPreviewPanel');
+  const table = document.getElementById('importPreviewTable');
+  const count = document.getElementById('importPreviewCount');
+  const totalMembers = teams.reduce((s,t)=>s+t.members.length,0);
+  count.textContent = `${teams.length} team${teams.length!==1?'s':''} · ${totalMembers} member${totalMembers!==1?'s':''}`;
+
+  table.innerHTML = `
+    <table class="matrix-table" style="min-width:600px;">
+      <thead><tr>
+        <th>#</th><th>Team Name</th>
+        <th style="color:var(--accent);">Auto Event ID</th>
+        <th>Members</th><th>Roles</th>
+      </tr></thead>
+      <tbody>
+        ${teams.map((t,i) => `
+          <tr>
+            <td style="color:var(--text-dim);font-family:'Space Mono';">${i+1}</td>
+            <td style="color:#fff;font-weight:700;">${escHtml(t.name)}</td>
+            <td><span style="background:var(--accent);color:#000;font-family:'Space Mono';font-weight:700;font-size:13px;padding:3px 10px;">${escHtml(t.id)}</span></td>
+            <td style="font-family:'Space Mono';font-size:11px;color:var(--text-dim);">${t.members.map(m=>escHtml(m)).join('<br>')}</td>
+            <td style="font-size:11px;">${t.details.map(d=>`<span class="tag tag-blue" style="margin-bottom:2px;">${escHtml(d.role)}</span>`).join(' ')}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function confirmImport() {
+  if (!_pendingImport.length) return;
+  const importedIds = new Set(_pendingImport.map(t => t.id));
+  const retained = systemTeams.filter(t => !importedIds.has(t.id) &&
+    !_pendingImport.some(pt => pt.name.toLowerCase() === t.name.toLowerCase()));
+  systemTeams = [...retained, ..._pendingImport];
+  const total = _pendingImport.reduce((s,t)=>s+t.members.length,0);
+  excelLog(`✓ Saved ${_pendingImport.length} teams, ${total} members. Event IDs assigned.`, 'ok');
+  setExcelStatus(`Last import: ${new Date().toLocaleTimeString()} — ${_pendingImport.length} teams saved`, true);
+  showSyncToast(`✓ ${_pendingImport.length} teams imported with auto Event IDs`);
+  _pendingImport = [];
+  document.getElementById('importPreviewPanel').style.display = 'none';
+  refreshTeamRegistryViews();
+}
+
+function cancelImport() {
+  _pendingImport = [];
+  document.getElementById('importPreviewPanel').style.display = 'none';
+  excelLog('Import cancelled.', 'info');
 }
 
 /* Drag & drop for the import zone */
