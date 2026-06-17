@@ -28,7 +28,7 @@
   body::before { content:"";position:fixed;top:0;left:0;width:100vw;height:100vh;opacity:.12;pointer-events:none;z-index:-1;background-image:radial-gradient(var(--text-dim) 1px,transparent 1px),linear-gradient(to right,rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,.02) 1px,transparent 1px);background-size:24px 24px,120px 120px,120px 120px; }
 
   /* CURTAIN */
-  #curtain-overlay { position:fixed;inset:0;z-index:50000;pointer-events:all;background:radial-gradient(circle at center,rgba(10,10,10,.9) 0%,#050505 100%);backdrop-filter:blur(32px);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 1.4s cubic-bezier(.25,1,.5,1),backdrop-filter 1.4s cubic-bezier(.25,1,.5,1); }
+  #curtain-overlay { position:fixed;inset:0;z-index:50000;pointer-events:all;background:radial-gradient(circle at center,rgba(10,10,10,.9) 0%,#050505 100%);-webkit-backdrop-filter:blur(32px);backdrop-filter:blur(32px);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 1.4s cubic-bezier(.25,1,.5,1),backdrop-filter 1.4s cubic-bezier(.25,1,.5,1); }
   .curtain-wireframe { position:absolute;width:80%;max-width:600px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.03) 50%,transparent); }
   .wire-top { transform:translateY(-40px); } .wire-bottom { transform:translateY(40px); }
   #ribbon-wrap { pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:24px; }
@@ -36,17 +36,17 @@
   .center-node-inner { width:8px;height:8px;background:var(--accent);box-shadow:0 0 20px var(--accent); }
   #tap-prompt { text-align:center;font-family:'Space Mono',monospace;font-size:11px;font-weight:400;text-transform:uppercase;letter-spacing:.3em;color:rgba(245,245,245,.7);pointer-events:none;animation:prompt-soft-glow 3s ease-in-out infinite; }
   @keyframes prompt-soft-glow { 0%,100%{opacity:.4;color:rgba(245,245,245,.5);} 50%{opacity:.95;color:#fff;text-shadow:0 0 15px rgba(255,255,255,.2);} }
-  #curtain-overlay.open { opacity:0;backdrop-filter:blur(0px);pointer-events:none; }
+  #curtain-overlay.open { opacity:0;-webkit-backdrop-filter:blur(0px);backdrop-filter:blur(0px);pointer-events:none; }
   #curtain-overlay.gone { display:none!important; }
 
   .blueprint-frame { position:absolute;width:16px;height:16px;border:1px solid #333;pointer-events:none; }
   .frame-tl { top:20px;left:20px;border-right:none;border-bottom:none; }
   .frame-tr { top:20px;right:20px;border-left:none;border-bottom:none; }
-  .crosshair-decor { position:absolute;width:16px;height:16px;color:#3a3a3a;pointer-events:none;user-select:none;transition:transform .6s cubic-bezier(.16,1,.3,1); }
+  .crosshair-decor { position:absolute;width:16px;height:16px;color:#3a3a3a;pointer-events:none;-webkit-user-select:none;-moz-user-select:none;user-select:none;transition:transform .6s cubic-bezier(.16,1,.3,1); }
   .crosshair-decor::before,.crosshair-decor::after { content:"";position:absolute;background:currentColor; }
   .crosshair-decor::before { top:7px;left:0;width:16px;height:2px; }
   .crosshair-decor::after { top:0;left:7px;width:2px;height:16px; }
-  .tape-strip { position:absolute;background:rgba(255,255,255,.07);backdrop-filter:blur(2px);border-left:1px dashed rgba(255,255,255,.2);border-right:1px dashed rgba(255,255,255,.2);transform:rotate(-3deg);z-index:10;pointer-events:none; }
+  .tape-strip { position:absolute;background:rgba(255,255,255,.07);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);border-left:1px dashed rgba(255,255,255,.2);border-right:1px dashed rgba(255,255,255,.2);transform:rotate(-3deg);z-index:10;pointer-events:none; }
   .tape-tl { top:-14px;left:20px;width:80px;height:20px; }
   .tape-br { bottom:-12px;right:30px;width:95px;height:22px;transform:rotate(2deg); }
 
@@ -73,6 +73,7 @@
   @media(max-width:950px){#page-landing{overflow-y:auto;}.poster-canvas{grid-template-columns:1fr;gap:40px;height:auto;max-height:none;}}
 
   .brand-manifesto-panel { display:flex;flex-direction:column;justify-content:flex-start;height:100%;overflow-y:auto;padding-right:12px; }
+  .brand-manifesto-panel,.inner-scroll-card { scrollbar-width:thin;scrollbar-color:#222 transparent; }
   .brand-manifesto-panel::-webkit-scrollbar,.inner-scroll-card::-webkit-scrollbar { width:6px; }
   .brand-manifesto-panel::-webkit-scrollbar-thumb,.inner-scroll-card::-webkit-scrollbar-thumb { background:#222;border-radius:3px; }
 
